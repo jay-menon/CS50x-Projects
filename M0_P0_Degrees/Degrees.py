@@ -58,7 +58,7 @@ def load_data(directory):
 
 def main():
     if len(sys.argv) > 2:
-        sys.exit("Usage: python degrees.py [directory]")
+        sys.exit("Usage: python Degrees.py [csv_directory]")
     directory = sys.argv[1] if len(sys.argv) == 2 else "large"
 
     # Load data from files into memory
@@ -95,9 +95,26 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
+    initial_node = Node(source, [], neighbors_for_person(source))
+    frontier = StackFrontier()
+    frontier.add(initial_node)
+    visited_actor_IDs = [source]
 
-    # TODO
-    raise NotImplementedError
+    while frontier.empty() is False:
+        curr_node = frontier.frontier[0]
+        if curr_node.state == target:
+            return curr_node.parent
+        else:
+            visited_actor_IDs.append(curr_node.state)
+            for connection in curr_node.action:
+                if connection[1] not in visited_actor_IDs:
+                    new_parent = curr_node.parent + [[connection[0], curr_node.state]]
+                    frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
+            frontier.remove()
+    return None
+
+    # # TODO
+    # raise NotImplementedError
 
 
 def person_id_for_name(name):
