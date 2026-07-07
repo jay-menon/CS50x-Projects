@@ -111,7 +111,6 @@ def person_id_for_name(name):
     else:
         return person_ids[0]
 
-
 def shortest_path(source, target):
     """
     Returns the shortest list of (movie_id, person_id) pairs
@@ -136,21 +135,15 @@ def shortest_path(source, target):
             frontier.frontier = frontier.frontier[1:]
     return None
 
-    # shortest_path function troubleshooting
-    # 1. Confirmed that if the function outputs a list in the right format, we will see a correct output
-    # 2. Loop does not seem to be meeting curr_node.state == target condition OR empty frontier condition
-        # 2a. Check if frontier seems to be getting infinitely big because visited IDs keep getting included
-        # Confirmed the frontier is getting infinitely large
-
-        # i) neighbours_for_person func works as intended
-
 def path_formatter(path, target):
+    """
+    Returns the path of actor connections in the format expected by the main() function
+    """
     reformatted_path = []
     for i in range(0, len(path)-1):
         reformatted_path.append([path[i][0], path[i+1][1]])
     reformatted_path.append([path[len(path)-1][0], target])
     return reformatted_path
-
 
 def neighbors_for_person(person_id):
     """
@@ -164,16 +157,5 @@ def neighbors_for_person(person_id):
             neighbors.add((movie_id, person_id))
     return neighbors
 
-
-
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
