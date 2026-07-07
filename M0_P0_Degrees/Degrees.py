@@ -55,7 +55,6 @@ def load_data(directory):
             except KeyError:
                 pass
 
-
 def main():
     if len(sys.argv) > 2:
         sys.exit("Usage: python Degrees.py [csv_directory]")
@@ -87,36 +86,6 @@ def main():
             movie = movies[path[i + 1][0]]["title"]
             print(f"{i + 1}: {person1} and {person2} starred in {movie}")
 
-
-def shortest_path(source, target):
-    """
-    Returns the shortest list of (movie_id, person_id) pairs
-    that connect the source to the target.
-
-    If no possible path, returns None.
-    """
-    initial_node = Node(source, [], neighbors_for_person(source))
-    frontier = StackFrontier()
-    frontier.add(initial_node)
-    visited_actor_IDs = [source]
-
-    while frontier.empty() is False:
-        curr_node = frontier.frontier[0]
-        if curr_node.state == target:
-            return curr_node.parent
-        else:
-            visited_actor_IDs.append(curr_node.state)
-            for connection in curr_node.action:
-                if connection[1] not in visited_actor_IDs:
-                    new_parent = curr_node.parent + [[connection[0], curr_node.state]]
-                    frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
-            frontier.remove()
-    return None
-
-    # # TODO
-    # raise NotImplementedError
-
-
 def person_id_for_name(name):
     """
     Returns the IMDB id for a person's name,
@@ -143,6 +112,46 @@ def person_id_for_name(name):
         return person_ids[0]
 
 
+def shortest_path(source, target):
+    """
+    Returns the shortest list of (movie_id, person_id) pairs
+    that connect the source to the target.
+
+    If no possible path, returns None.
+    """
+    initial_node = Node(source, [], neighbors_for_person(source))
+    frontier = StackFrontier()
+    frontier.add(initial_node)
+    visited_actor_IDs = [source]
+    while frontier.empty() is False:
+        curr_node = frontier.frontier[0]
+        if curr_node.state == target:
+            return path_formatter(curr_node.parent, target)
+        else:
+            visited_actor_IDs.append(curr_node.state)
+            for connection in curr_node.action:
+                if connection[1] not in visited_actor_IDs:
+                    new_parent = curr_node.parent + [[connection[0], curr_node.state]]
+                    frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
+            frontier.frontier = frontier.frontier[1:]
+    return None
+
+    # shortest_path function troubleshooting
+    # 1. Confirmed that if the function outputs a list in the right format, we will see a correct output
+    # 2. Loop does not seem to be meeting curr_node.state == target condition OR empty frontier condition
+        # 2a. Check if frontier seems to be getting infinitely big because visited IDs keep getting included
+        # Confirmed the frontier is getting infinitely large
+
+        # i) neighbours_for_person func works as intended
+
+def path_formatter(path, target):
+    reformatted_path = []
+    for i in range(0, len(path)-1):
+        reformatted_path.append([path[i][0], path[i+1][1]])
+    reformatted_path.append([path[len(path)-1][0], target])
+    return reformatted_path
+
+
 def neighbors_for_person(person_id):
     """
     Returns (movie_id, person_id) pairs for people
@@ -154,6 +163,7 @@ def neighbors_for_person(person_id):
         for person_id in movies[movie_id]["stars"]:
             neighbors.add((movie_id, person_id))
     return neighbors
+
 
 
 if __name__ == "__main__":
