@@ -118,33 +118,36 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
-    initial_node = Node(source, [], neighbors_for_person(source))
+    initial_node = Node(source, None, neighbors_for_person(source))
     frontier = QueueFrontier()
     frontier.add(initial_node)
     visited_actor_IDs = {source}
     while frontier.empty() is False:
-        curr_node = frontier.frontier[0]
-        if curr_node.state == target:
-            return path_formatter(curr_node.parent, target)
+        if frontier.contains_state(target):
+            final_node = search_frontier(frontier, target)
+            path = path_retracer(final_node, source)
+            return path
         else:
+            curr_node = frontier.remove()
             visited_actor_IDs.add(curr_node.state)
             for connection in curr_node.action:
                 if connection[1] not in visited_actor_IDs:
                     visited_actor_IDs.add(connection[1])
-                    new_parent = curr_node.parent + [[connection[0], curr_node.state]]
-                    frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
-            frontier.remove()
+                    frontier.add(Node(connection[1], [connection[0], curr_node], neighbors_for_person(connection[1])))
     return None
 
-def path_formatter(path, target):
-    """
-    Returns the path of actor connections in the format expected by the main() function
-    """
-    reformatted_path = []
-    for i in range(0, len(path)-1):
-        reformatted_path.append([path[i][0], path[i+1][1]])
-    reformatted_path.append([path[len(path)-1][0], target])
-    return reformatted_path
+def search_frontier(frontier, target):
+    for node in frontier.frontier:
+        if node.state == target:
+            return node
+
+def path_retracer(final_node, source):
+    path = []
+    curr_node = final_node
+    while curr_node.state != source:
+        path.insert(0,[curr_node.parent[0], curr_node.state])
+        curr_node = curr_node.parent[1]
+    return path
 
 def neighbors_for_person(person_id):
     """
@@ -168,3 +171,5 @@ if __name__ == "__main__":
 # 4. Change already explored actor list to a SET: faster search and .add automatically avoids duplicates
     # A value going into a set will have the same associated hash every time and so when we try add an item to a set,
     # the system only needs to check if that hash slot has already been occupied or not
+# 5. Action is not used as intended either: the action for a node ought to be the movie_ID that links the current node to the parent one
+# NOTE: We used list for frontier over a set because ORDER MATTERS for the frontier    
