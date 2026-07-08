@@ -118,7 +118,7 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
-    initial_node = Node(source, None, neighbors_for_person(source))
+    initial_node = Node(source, None, None)
     frontier = QueueFrontier()
     frontier.add(initial_node)
     visited_actor_IDs = {source}
@@ -130,10 +130,11 @@ def shortest_path(source, target):
         else:
             curr_node = frontier.remove()
             visited_actor_IDs.add(curr_node.state)
-            for connection in curr_node.action:
+            connection_list = neighbors_for_person(curr_node.state)
+            for connection in connection_list:
                 if connection[1] not in visited_actor_IDs:
                     visited_actor_IDs.add(connection[1])
-                    frontier.add(Node(connection[1], [connection[0], curr_node], neighbors_for_person(connection[1])))
+                    frontier.add(Node(connection[1], curr_node, connection[0]))
     return None
 
 def search_frontier(frontier, target):
@@ -145,8 +146,8 @@ def path_retracer(final_node, source):
     path = []
     curr_node = final_node
     while curr_node.state != source:
-        path.insert(0,[curr_node.parent[0], curr_node.state])
-        curr_node = curr_node.parent[1]
+        path.insert(0,(curr_node.action, curr_node.state))
+        curr_node = curr_node.parent
     return path
 
 def neighbors_for_person(person_id):
