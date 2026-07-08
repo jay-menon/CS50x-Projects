@@ -130,6 +130,7 @@ def shortest_path(source, target):
             visited_actor_IDs.append(curr_node.state)
             for connection in curr_node.action:
                 if connection[1] not in visited_actor_IDs:
+                    visited_actor_IDs.append(connection[1])
                     new_parent = curr_node.parent + [[connection[0], curr_node.state]]
                     frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
             frontier.frontier = frontier.frontier[1:]
