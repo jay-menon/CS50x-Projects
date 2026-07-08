@@ -121,15 +121,16 @@ def shortest_path(source, target):
     initial_node = Node(source, [], neighbors_for_person(source))
     frontier = QueueFrontier()
     frontier.add(initial_node)
-    visited_actor_IDs = [source]
+    visited_actor_IDs = {source}
     while frontier.empty() is False:
         curr_node = frontier.frontier[0]
         if curr_node.state == target:
             return path_formatter(curr_node.parent, target)
         else:
-            visited_actor_IDs.append(curr_node.state)
+            visited_actor_IDs.add(curr_node.state)
             for connection in curr_node.action:
                 if connection[1] not in visited_actor_IDs:
+                    visited_actor_IDs.add(connection[1])
                     new_parent = curr_node.parent + [[connection[0], curr_node.state]]
                     frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
             frontier.remove()
