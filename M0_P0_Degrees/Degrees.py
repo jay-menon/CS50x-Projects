@@ -138,11 +138,18 @@ def shortest_path(source, target):
     return None
 
 def search_frontier(frontier, target):
+    """
+    Function searches the frontier for and returns the node whose state is the target state
+    """
     for node in frontier.frontier:
         if node.state == target:
             return node
 
 def path_retracer(final_node, source):
+    """
+    Function traces the path taken to go from the source to the target and formats it
+    in a list of tuples form, as required by the shortest_path function
+    """
     path = []
     curr_node = final_node
     while curr_node.state != source:
@@ -164,13 +171,3 @@ def neighbors_for_person(person_id):
 
 if __name__ == "__main__":
     main()
-
-# Problems to fix:
-# 1. Duplicate actors in the frontier
-# 2. Not using the class methods and instead, manually exectuing them
-# 3. Node.parent currently contains the whole history of previous nodes (should only contain the previous one)
-# 4. Change already explored actor list to a SET: faster search and .add automatically avoids duplicates
-    # A value going into a set will have the same associated hash every time and so when we try add an item to a set,
-    # the system only needs to check if that hash slot has already been occupied or not
-# 5. Action is not used as intended either: the action for a node ought to be the movie_ID that links the current node to the parent one
-# NOTE: We used list for frontier over a set because ORDER MATTERS for the frontier    
