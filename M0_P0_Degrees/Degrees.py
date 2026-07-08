@@ -119,7 +119,7 @@ def shortest_path(source, target):
     If no possible path, returns None.
     """
     initial_node = Node(source, [], neighbors_for_person(source))
-    frontier = StackFrontier()
+    frontier = QueueFrontier()
     frontier.add(initial_node)
     visited_actor_IDs = [source]
     while frontier.empty() is False:
@@ -130,10 +130,9 @@ def shortest_path(source, target):
             visited_actor_IDs.append(curr_node.state)
             for connection in curr_node.action:
                 if connection[1] not in visited_actor_IDs:
-                    visited_actor_IDs.append(connection[1])
                     new_parent = curr_node.parent + [[connection[0], curr_node.state]]
                     frontier.add(Node(connection[1], new_parent, neighbors_for_person(connection[1])))
-            frontier.frontier = frontier.frontier[1:]
+            frontier.remove()
     return None
 
 def path_formatter(path, target):
@@ -160,3 +159,11 @@ def neighbors_for_person(person_id):
 
 if __name__ == "__main__":
     main()
+
+# Problems to fix:
+# 1. Duplicate actors in the frontier
+# 2. Not using the class methods and instead, manually exectuing them
+# 3. Node.parent currently contains the whole history of previous nodes (should only contain the previous one)
+# 4. Change already explored actor list to a SET: faster search and .add automatically avoids duplicates
+    # A value going into a set will have the same associated hash every time and so when we try add an item to a set,
+    # the system only needs to check if that hash slot has already been occupied or not
