@@ -111,49 +111,33 @@ def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-    action_util_dict = {key:[] for key in actions(board)}
-    action_term_node_dict = {key:set() for key in actions(board)}
-    #print(actions(board))
-    board_copy = list(board)
-    action_num = 0
-    nodes_explored = set()
+
     terminal_nodes = set()
     initial_nodes = set()
     node_daughter_dict = {}
     for action in actions(board):
-        action_num += 1
-        #print(action_num)
+
         # Initialise the search with initial node and frontier
         initial_node = Node(result(board, action),board,action)
         initial_nodes.add(initial_node)
         frontier = QueueFrontier()
         frontier.add(initial_node)
         # Iterate through all nodes until terminal condition met, store terminal nodes in set
-        # Also stores the utility of each node in node_dict
-        num = 0
         while frontier.empty() is False:
             curr_node = frontier.remove()
-            nodes_explored.add(curr_node)
             node_daughter_dict[curr_node] = set()
-            num += 1
+
             if terminal(curr_node.state) is True:
-                action_util_dict[action].append(utility(curr_node.state))
                 terminal_nodes.add(curr_node)
-                action_term_node_dict[action].add(curr_node)
             else:
                 poss_actions = actions(curr_node.state)
-                poss_added = 0
+
                 for poss_action in poss_actions:
                     daughter_node = Node(result(curr_node.state,poss_action), curr_node, poss_action)
                     frontier.add(daughter_node)
                     node_daughter_dict[curr_node].add(daughter_node)
 
-                    poss_added += 1
-                    #print(poss_added)
-        #print(num)
-    # print(len(nodes_explored))
-    # print(len(node_daughter_dict))
-    # print(len(terminal_nodes))
+
     val_dict = node_val_finder(terminal_nodes, node_daughter_dict)
     (win,loss,draw, other) = (0,0,0,0)
     for item in val_dict:
@@ -198,78 +182,10 @@ def minimax(board):
 # - We are indeed getting set of nodes for terminal nodes
 # - We appear to be getting the dictionary now too
 
-    if curr_player == "X":
-        action_min_util_dict = {action:min(action_util_dict[action]) for action in action_util_dict}
-        incumbent = -2
-        best_action = None
-        for action in action_min_util_dict:
-            if action_min_util_dict[action] > incumbent:
-                best_action = action
-                incumbent = action_min_util_dict[action]
-    else:
-        action_max_util_dict = {action:max(action_util_dict[action]) for action in action_util_dict}
-        incumbent = 2
-        best_action = None
-        for action in action_max_util_dict:
-            if action_max_util_dict[action] < incumbent:
-                best_action = action
-                incumbent = action_max_util_dict[action]       
-    return best_action
-
-
-
 
     raise NotImplementedError
 
-def node_min_max(terminal_nodes, node_daughter_dict):
-    """Takes in a list of terminal nodes and a dictionary of every node's daughter nodes
-    Outputs a dictionary that will contain every node w their respective min_max info
-    """
-    # node_daughter_dict is a dict containing all nodes as keys and defs are sets of daughter nodes
-    # terminal_nodes_dict is a dictionary that will contain all nodes w their respective min_max info
-    curr_terminal_nodes_dict = {terminal_node:(utility(terminal_node.state),utility(terminal_node.state)) for terminal_node in terminal_nodes} 
-    nodes_min_max_dict = dict(curr_terminal_nodes_dict)
-    nodes_val_dict = {node:None for node in dict(node_daughter_dict)}
-    # print(len(curr_terminal_nodes_dict))
-    # print(len(nodes_min_max_dict))
 
-    itr = 0
-    while len(nodes_min_max_dict) != len(node_daughter_dict):
-        itr +=1
-        # print("WHile itr: " + str(itr))
-
-        # print(len(curr_terminal_nodes_dict))
-        # print(len(nodes_min_max_dict))
-
-
-        for1_itr = 0 
-        for terminal_node in curr_terminal_nodes_dict:
-            for1_itr += 1
-            #print("for1 itr: " + str(for1_itr))
-            min_max = curr_terminal_nodes_dict[terminal_node]
-            parent = terminal_node.parent
-            node_daughter_dict[parent].remove(terminal_node)
-            node_daughter_dict[parent].add(min_max)
-
-        new_terminal_nodes_dict = {}
-        for2_itr = 0
-        for node in node_daughter_dict:
-            for2_itr +=1 
-            #print("for2 itr: " + str(for2_itr))
-            if term_node_checker(node_daughter_dict[node]) is True and node not in nodes_min_max_dict:
-                min_max = consol_min_max(node_daughter_dict[node])
-                val = val_finder(node, node_daughter_dict[node])
-                nodes_val_dict[node] = val
-                nodes_min_max_dict[node] = min_max
-                new_terminal_nodes_dict[node] = min_max
-        curr_terminal_nodes_dict = new_terminal_nodes_dict
-    print(nodes_val_dict)
-    return nodes_val_dict
-
-# def min_max_util(board, action, node_daughter_dict, nodes_min_max_dict, action_term_node_dict):
-#     for term_node in action_term_node_dict[action]:
-#         curr_state = term_node.state
-#         curr_player = player(term_node.state)
 
 def node_val_finder(terminal_nodes, node_daughter_dict):
     """Takes in a list of terminal nodes and a dictionary of every node's daughter nodes
@@ -321,19 +237,6 @@ def val_finder(node, val_list):
     else:
         return min(val_list)
     
-
-
-
-
-
-def consol_min_max(min_max_list):
-    (min_val, max_val) = (1,-1)
-    for min_max in min_max_list:
-        if min_max[0] < min_val:
-            min_val = min_max[0]
-        if min_max[1] > max_val:
-            max_val = min_max[1]
-    return (min_val, max_val)
 
 def term_node_checker(node_def):
     for val in node_def:
