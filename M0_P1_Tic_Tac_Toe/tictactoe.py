@@ -2,8 +2,7 @@
 Tic Tac Toe Player
 """
 
-import math
-from util import Node, StackFrontier, QueueFrontier
+from util import Node, QueueFrontier
 
 X = "X"
 O = "O"
@@ -64,11 +63,14 @@ def result(board, action):
     """
     Returns the board that results from making move (i, j) on the board.
     """
+    i, j = action
     curr_player = player(board)
     board_copy = [list(i) for i in list(board)]
-    board_copy[action[0]][action[1]] = curr_player
+    if board_copy[i][j] == EMPTY:
+        board_copy[i][j] = curr_player
+    else:
+        raise ValueError("Illegal move")
     return board_copy
-    raise NotImplementedError
 
 
 def winner(board):
@@ -91,7 +93,6 @@ def winner(board):
         elif three.count(O) ==3:
             return O
     return None
-    raise NotImplementedError
 
 
 def terminal(board):
@@ -99,13 +100,12 @@ def terminal(board):
     Returns True if game is over, False otherwise.
     """
     XO_dict = count_XO(board)
-    if winner(board) != None:
+    if winner(board) is not None:
         return True
     elif XO_dict[X] + XO_dict[O] == 9:
         return True
     else:
         return False
-    raise NotImplementedError
 
 
 def count_XO(board):
@@ -126,7 +126,6 @@ def utility(board):
         return -1
     else:
         return 0
-    raise NotImplementedError
 
 
 def minimax(board):
@@ -215,7 +214,7 @@ def val_dict_writer(terminal_nodes, node_daughter_dict):
 
 
 def val_finder(node, val_list):
-    if player(node.state) == X
+    if player(node.state) == X:
         return max(val_list)
     else:
         return min(val_list)
@@ -231,3 +230,7 @@ def term_node_checker(node_def):
 # Extras to include:
 # - Use symmetry to reduce early computatiom
 # - Alpha beta pruning
+
+# Things that should've have been done:
+# - Use defined variables X,O instead of repeating string literals every time
+# - In results() function, reject illegal moves
