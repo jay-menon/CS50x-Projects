@@ -74,10 +74,11 @@ def result(board, action):
     i, j = action
     curr_player = player(board)
     board_copy = [list(i) for i in list(board)]
-    if board_copy[i][j] == EMPTY:
-        board_copy[i][j] = curr_player
-    else:
+    if board_copy[i][j] != EMPTY:
         raise ValueError("Illegal move")
+    elif i < 0 or i > 2 or j < 0 or i > 2:
+        raise ValueError("Out of bounds move")
+    board_copy[i][j] = curr_player
     return board_copy
 
 
@@ -145,6 +146,9 @@ def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
+    # Returns none if board is already in a terminal state
+    if terminal(board) is True:
+        return None
     # Maps out the complete game state node tree from the current board, recording all terminal nodes and each node's daughter nodes:
     terminal_nodes = set()
     initial_nodes = set()
