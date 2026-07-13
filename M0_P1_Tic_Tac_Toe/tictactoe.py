@@ -37,8 +37,34 @@ def actions(board):
         for j in range(0,3):
             if board[i][j] == EMPTY:
                 poss_actions.add((i,j))
-
     return poss_actions
+
+
+def sym_simplifier(board):
+    """
+    Returns only actions that are not mathematically equivalent to any other actions from the list of all possible actions.
+    Can be used as a faster alternative to the actions(board) function.
+    """
+    # If the board is symmetrical along an axis, one action of a symmetric pair is added to degen_actions
+    degen_actions = set()
+    # horz sym line
+    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
+        degen_actions.update([(0,0),(0,1),(0,2)])
+    # vert sym line
+    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
+        degen_actions.update([(0,0),(1,0),(2,0)])
+    # y=x sym line
+    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
+        degen_actions.update([(0,1),(0,0),(1,0)])
+    # y=-x sym line
+    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
+        degen_actions.update([(1,0),(2,0),(2,1)])
+    # Returns the list of all possible actions without any of the degenerate actions
+    new_actions = set()
+    for action in actions(board):
+        if action not in degen_actions:
+            new_actions.add(action)
+    return new_actions
 
 
 def result(board, action):
@@ -54,31 +80,12 @@ def result(board, action):
         raise ValueError("Illegal move")
     return board_copy
 
-def sym_simplifier(board):
-    degen_actions = set()
-    # horz sym line
-    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
-        degen_actions.update([(0,0),(0,1),(0,2)])
-    # vert sym line
-    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
-        degen_actions.update([(0,0),(1,0),(2,0)])
-    # y=x sym line
-    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
-        degen_actions.update([(0,1),(0,0),(1,0)])
-    # y=-x sym line
-    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
-        degen_actions.update([(1,0),(2,0),(2,1)])
-
-    new_actions = set()
-    for action in actions(board):
-        if action not in degen_actions:
-            new_actions.add(action)
-    return new_actions
 
 def winner(board):
     """
     Returns the winner of the game, if there is one.
     """
+    # Constructs lists of each row, column and diagonal on the board
     rows_list = board
     cols_list = [[],[],[]]
     diag_TLBR = []
@@ -88,6 +95,7 @@ def winner(board):
             cols_list[j].append(board[i][j])
         diag_TLBR.append(board[i][i])
         diag_TRBL.append(board[i][2-i])
+    # Checks if any of the lists meet the winning criteria (3 in a row) and returns winner
     threes_list = rows_list + cols_list + [diag_TRBL, diag_TLBR]
     for three in threes_list:
         if three.count(X) == 3:
@@ -111,6 +119,9 @@ def terminal(board):
 
 
 def count_XO(board):
+    """
+    Returns dictionary specifying number of Xs and Os currently on the board.
+    """
     XO_dict = {X:0, O:0}
     for row in board:
         XO_dict[X] += row.count(X)
@@ -134,38 +145,42 @@ def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-    new_actions = sym_simplifier(board)
+    # Maps out the complete game state node tree from the current board, recording all terminal nodes and each node's daughter nodes:
     terminal_nodes = set()
     initial_nodes = set()
     node_daughter_dict = {}
-    for action in new_actions:
+    for action in sym_simplifier(board):
         # Initialise the search with initial node and frontier
         initial_node = Node(result(board, action),None,action)
         initial_nodes.add(initial_node)
         frontier = QueueFrontier()
         frontier.add(initial_node)
-        # Iterate through all nodes until terminal condition met, store terminal nodes in set
+        # Iterate through all nodes until every terminal state has been evaluated and so frontier is empty
         while frontier.empty() is False:
             curr_node = frontier.remove()
             node_daughter_dict[curr_node] = set()
 
+            # When a terminal node is reached, add to terminal_nodes set
             if terminal(curr_node.state) is True:
                 terminal_nodes.add(curr_node)
+            # If node is not terminal, find its daughter nodes from the next possible actions and record this in node_daughter_dict
             else:
                 poss_actions = sym_simplifier(curr_node.state)
-
                 for poss_action in poss_actions:
                     daughter_node = Node(result(curr_node.state,poss_action), curr_node, poss_action)
                     frontier.add(daughter_node)
                     node_daughter_dict[curr_node].add(daughter_node)
 
+    # Find the value of every node from the val_dict_writer function
     val_dict = val_dict_writer(terminal_nodes, node_daughter_dict)
 
+    # Find the value of each immediate action possible and store in curr_action_dict
     curr_action_dict = {}
     for initial_node in initial_nodes:
         action_utility = val_dict[initial_node]
         curr_action_dict[initial_node.action] = action_utility
 
+    # Return the utility maximising action for X or the minimising action for O
     curr_player = player(board)
     if curr_player == X:
         incumbent = -2
@@ -181,21 +196,20 @@ def minimax(board):
             if curr_action_dict[action] < incumbent:
                 best_action = action
                 incumbent = curr_action_dict[action]
-
     return best_action
 
 
 def val_dict_writer(terminal_nodes, node_daughter_dict):
-    """Takes in a list of terminal nodes and a dictionary of every node's daughter nodes
-    Outputs a dictionary that will contain every node w their respective min_max info
     """
-    # node_daughter_dict is a dict containing all nodes as keys and defs are sets of daughter nodes
-    # terminal_nodes_dict is a dictionary that will contain all nodes w their respective min_max info
+    Returns a dictionary containing every node with their respective utility.
+    """
+    # node_daughter_dict = {node0:{set of node0's daughter nodes}, ...}
+    # curr_terminal_nodes_dict = {term_node0: val0, term_node1: val1, ...}
     curr_terminal_nodes_dict = {terminal_node: utility(terminal_node.state) for terminal_node in terminal_nodes} 
     nodes_val_dict = dict(curr_terminal_nodes_dict)
-
+    # Loop runs until nodes_val_dict has utility values for every node that appears in node_daughter_dict
     while len(nodes_val_dict) != len(node_daughter_dict):
-
+        # For each node in curr_terminal_nodes_dict, replaces every instance of that node as a value in node_daughter_dict with its utility
         for terminal_node in curr_terminal_nodes_dict:
             val = curr_terminal_nodes_dict[terminal_node]
             parent = terminal_node.parent
@@ -204,7 +218,8 @@ def val_dict_writer(terminal_nodes, node_daughter_dict):
                 node_daughter_dict[parent].add(val)
             else:
                 pass
-
+        # Finds all nodes in node_daughter_dict with only utilities in their definition, then
+        # replaces the list of utilities with the node's final utility and adds info to nodes_val_dict
         new_terminal_nodes_dict = {}
         for node in node_daughter_dict:
             if term_node_checker(node_daughter_dict[node]) is True and node not in nodes_val_dict:
@@ -216,6 +231,9 @@ def val_dict_writer(terminal_nodes, node_daughter_dict):
 
 
 def val_finder(node, val_list):
+    """
+    Returns a node's utility from an input of its daughter nodes' utilities.
+    """
     if player(node.state) == X:
         return max(val_list)
     else:
@@ -223,16 +241,11 @@ def val_finder(node, val_list):
     
 
 def term_node_checker(node_def):
+    """
+    Returns True if a node is a terminal node and False otherwise.
+    """
     for val in node_def:
         if type(val) == Node:
             return False
     return True
 
-
-# Extras to include:
-# - Use symmetry to reduce early computatiom
-# - Alpha beta pruning
-
-# Things that should've have been done:
-# - Use defined variables X,O instead of repeating string literals every time
-# - In results() function, reject illegal moves
