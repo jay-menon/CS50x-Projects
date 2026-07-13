@@ -18,6 +18,7 @@ def initial_state():
             [EMPTY, EMPTY, EMPTY],
             [EMPTY, EMPTY, EMPTY]]
 
+
 def player(board):
     """
     Returns player who has the next turn on a board.
@@ -28,6 +29,7 @@ def player(board):
     else:
         return "O"
     raise NotImplementedError
+
 
 def actions(board):
     """
@@ -41,6 +43,7 @@ def actions(board):
     return poss_actions
     raise NotImplementedError
 
+
 def result(board, action):
     """
     Returns the board that results from making move (i, j) on the board.
@@ -50,6 +53,7 @@ def result(board, action):
     board_copy[action[0]][action[1]] = curr_player
     return board_copy
     raise NotImplementedError
+
 
 def winner(board):
     """
@@ -73,6 +77,7 @@ def winner(board):
     return None
     raise NotImplementedError
 
+
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
@@ -86,12 +91,14 @@ def terminal(board):
         return False
     raise NotImplementedError
 
+
 def count_XO(board):
     XO_dict = {"X":0, "O":0}
     for row in board:
         XO_dict["X"] += row.count("X")
         XO_dict["O"] += row.count("O")
     return XO_dict
+
 
 def utility(board):
     """
@@ -106,7 +113,6 @@ def utility(board):
     raise NotImplementedError
 
 
-
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
@@ -116,7 +122,6 @@ def minimax(board):
     initial_nodes = set()
     node_daughter_dict = {}
     for action in actions(board):
-        #print()
         # Initialise the search with initial node and frontier
         initial_node = Node(result(board, action),None,action)
         initial_nodes.add(initial_node)
@@ -129,7 +134,6 @@ def minimax(board):
 
             if terminal(curr_node.state) is True:
                 terminal_nodes.add(curr_node)
-                #print(curr_node.state)
             else:
                 poss_actions = actions(curr_node.state)
 
@@ -138,21 +142,7 @@ def minimax(board):
                     frontier.add(daughter_node)
                     node_daughter_dict[curr_node].add(daughter_node)
 
-    #print(node_daughter_dict)
-
-
-    val_dict = node_val_finder(terminal_nodes, node_daughter_dict)
-    (win,loss,draw, other) = (0,0,0,0)
-    for item in val_dict:
-        if val_dict[item] == -1:
-            loss +=1
-        elif val_dict[item] == 1:
-            win += 1
-        elif val_dict[item] == 0:
-            draw += 1
-        else:
-            other += 1
-    print((win,loss,draw, other))
+    val_dict = val_dict_writer(terminal_nodes, node_daughter_dict)
 
     curr_action_dict = {}
     for initial_node in initial_nodes:
@@ -175,22 +165,9 @@ def minimax(board):
                 best_action = action
                 incumbent = curr_action_dict[action]
     return best_action
-# Minimax node tree troubleshoot
-# - actions(board) does indded give all available actions
-# - on the first action iteration, the initial board is correct
-# - (NOW FIXED) it appears the frontier has not been clearing after each iteration on the for loop
-# - Terminal states outputted appear to be accurate
-# - Node tree part appears to have been fixed
-
-# - We are indeed getting set of nodes for terminal nodes
-# - We appear to be getting the dictionary now too
 
 
-    raise NotImplementedError
-
-
-
-def node_val_finder(terminal_nodes, node_daughter_dict):
+def val_dict_writer(terminal_nodes, node_daughter_dict):
     """Takes in a list of terminal nodes and a dictionary of every node's daughter nodes
     Outputs a dictionary that will contain every node w their respective min_max info
     """
@@ -202,7 +179,6 @@ def node_val_finder(terminal_nodes, node_daughter_dict):
     while len(nodes_val_dict) != len(node_daughter_dict):
 
         for terminal_node in curr_terminal_nodes_dict:
-
             val = curr_terminal_nodes_dict[terminal_node]
             parent = terminal_node.parent
             if type(parent) == Node:
@@ -234,38 +210,29 @@ def term_node_checker(node_def):
             return False
     return True
 
-
-# Checkmate troubleshoot
-test = [["O", EMPTY, "X"],
-        ["O", "X", "X"],
-        [EMPTY, EMPTY, EMPTY]]
-# - Node tree script is producing the correct terminal node set
-print(minimax(test))
-
-
-
-# smaller func troubleshoot
-# test_consol = consol_min_max([(-1, 1), (-1, -1), (1, 1), (0, 0)])
-# print(test_consol)
-# test = Node([],[], None)
-# print(Node == type(test))
-# All working
-
-
-# Mistakes made:
-# 1. {None} Creates a None item in the dictionary, not an empty dictionary
-# 2. .add() is method for SETS, not dictionaries
-# 3. {} creates an empty dictionary, NOT an empty set: set created by set()
-# 4. Sets and dictionaries are NOT indexable as they are UNORDERED collections (uses hashes)
-# When writing node tree
-# 1. When importing classes from diff file, need to use:
-#   from util import Node, StackFrontier, QueueFrontier
-
-# Learnt:
-# 1. The multiline comment below the function def gets attached to the function as its explanation
-# 2. list() only makes a copy of the OUTER list meaning for nested lists, the lists inside your shallow copy
-#       are still linked to the original copy and changing those also changes the original!!
+def sym_checker(board, actions):
+    degen_actions = set()
+    # horz sym line
+    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
+        degen_actions.add((0,0),(0,1),(0,2))
+    # vert sym line
+    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
+        degen_actions.add((0,0),(1,0),(2,0))
+    # y=x sym line
+    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
+        degen_actions.add((0,1),(0,0),(1,0))
+    # y=-x sym line
+    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
+        degen_actions.add((1,0),(2,0),(2,1))
+    new_actions = []
+    for action in actions:
+        if action not in degen_actions:
+            new_actions.append(action)
+    return new_actions
 
 # Extras to include:
 # - Use symmetry to reduce early computatiom
 # - Alpha beta pruning
+
+test = initial_state()
+print(test)
