@@ -38,25 +38,7 @@ def actions(board):
             if board[i][j] == EMPTY:
                 poss_actions.add((i,j))
 
-    degen_actions = set()
-    # horz sym line
-    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
-        degen_actions.update([(0,0),(0,1),(0,2)])
-    # vert sym line
-    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
-        degen_actions.update([(0,0),(1,0),(2,0)])
-    # y=x sym line
-    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
-        degen_actions.update([(0,1),(0,0),(1,0)])
-    # y=-x sym line
-    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
-        degen_actions.update([(1,0),(2,0),(2,1)])
-
-    new_actions = []
-    for action in poss_actions:
-        if action not in degen_actions:
-            new_actions.append(action)
-    return new_actions
+    return poss_actions
 
 
 def result(board, action):
@@ -72,6 +54,26 @@ def result(board, action):
         raise ValueError("Illegal move")
     return board_copy
 
+def sym_simplifier(board):
+    degen_actions = set()
+    # horz sym line
+    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
+        degen_actions.update([(0,0),(0,1),(0,2)])
+    # vert sym line
+    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
+        degen_actions.update([(0,0),(1,0),(2,0)])
+    # y=x sym line
+    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
+        degen_actions.update([(0,1),(0,0),(1,0)])
+    # y=-x sym line
+    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
+        degen_actions.update([(1,0),(2,0),(2,1)])
+
+    new_actions = set()
+    for action in actions(board):
+        if action not in degen_actions:
+            new_actions.add(action)
+    return new_actions
 
 def winner(board):
     """
@@ -132,11 +134,11 @@ def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     """
-
+    new_actions = sym_simplifier(board)
     terminal_nodes = set()
     initial_nodes = set()
     node_daughter_dict = {}
-    for action in actions(board):
+    for action in new_actions:
         # Initialise the search with initial node and frontier
         initial_node = Node(result(board, action),None,action)
         initial_nodes.add(initial_node)
@@ -150,7 +152,7 @@ def minimax(board):
             if terminal(curr_node.state) is True:
                 terminal_nodes.add(curr_node)
             else:
-                poss_actions = actions(curr_node.state)
+                poss_actions = sym_simplifier(curr_node.state)
 
                 for poss_action in poss_actions:
                     daughter_node = Node(result(curr_node.state,poss_action), curr_node, poss_action)
