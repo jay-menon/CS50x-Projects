@@ -252,4 +252,3 @@ def term_node_checker(node_def):
         if type(val) == Node:
             return False
     return True
-
