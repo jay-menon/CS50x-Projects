@@ -40,8 +40,26 @@ def actions(board):
         for j in range(0,3):
             if board[i][j] == EMPTY:
                 poss_actions.add((i,j))
-    return poss_actions
-    raise NotImplementedError
+
+    degen_actions = set()
+    # horz sym line
+    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
+        degen_actions.update([(0,0),(0,1),(0,2)])
+    # vert sym line
+    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
+        degen_actions.update([(0,0),(1,0),(2,0)])
+    # y=x sym line
+    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
+        degen_actions.update([(0,1),(0,0),(1,0)])
+    # y=-x sym line
+    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
+        degen_actions.update([(1,0),(2,0),(2,1)])
+
+    new_actions = []
+    for action in poss_actions:
+        if action not in degen_actions:
+            new_actions.append(action)
+    return new_actions
 
 
 def result(board, action):
@@ -210,29 +228,7 @@ def term_node_checker(node_def):
             return False
     return True
 
-def sym_checker(board, actions):
-    degen_actions = set()
-    # horz sym line
-    if [board[0][0],board[0][1],board[0][2]] == [board[-1][0],board[-1][1],board[-1][2]]:
-        degen_actions.add((0,0),(0,1),(0,2))
-    # vert sym line
-    if [board[0][0],board[1][0],board[2][0]] == [board[0][-1],board[1][-1],board[2][-1]]:
-        degen_actions.add((0,0),(1,0),(2,0))
-    # y=x sym line
-    if [board[0][1],board[0][0],board[1][0]] == [board[-1][1],board[-1][-1],board[1][-1]]:
-        degen_actions.add((0,1),(0,0),(1,0))
-    # y=-x sym line
-    if [board[1][0],board[2][0],board[2][1]] == [board[0][1],board[0][2],board[1][2]]:
-        degen_actions.add((1,0),(2,0),(2,1))
-    new_actions = []
-    for action in actions:
-        if action not in degen_actions:
-            new_actions.append(action)
-    return new_actions
 
 # Extras to include:
 # - Use symmetry to reduce early computatiom
 # - Alpha beta pruning
-
-test = initial_state()
-print(test)
