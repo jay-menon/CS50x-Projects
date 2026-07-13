@@ -116,9 +116,9 @@ def minimax(board):
     initial_nodes = set()
     node_daughter_dict = {}
     for action in actions(board):
-
+        #print()
         # Initialise the search with initial node and frontier
-        initial_node = Node(result(board, action),board,action)
+        initial_node = Node(result(board, action),None,action)
         initial_nodes.add(initial_node)
         frontier = QueueFrontier()
         frontier.add(initial_node)
@@ -129,6 +129,7 @@ def minimax(board):
 
             if terminal(curr_node.state) is True:
                 terminal_nodes.add(curr_node)
+                #print(curr_node.state)
             else:
                 poss_actions = actions(curr_node.state)
 
@@ -136,6 +137,8 @@ def minimax(board):
                     daughter_node = Node(result(curr_node.state,poss_action), curr_node, poss_action)
                     frontier.add(daughter_node)
                     node_daughter_dict[curr_node].add(daughter_node)
+
+    #print(node_daughter_dict)
 
 
     val_dict = node_val_finder(terminal_nodes, node_daughter_dict)
@@ -195,42 +198,29 @@ def node_val_finder(terminal_nodes, node_daughter_dict):
     # terminal_nodes_dict is a dictionary that will contain all nodes w their respective min_max info
     curr_terminal_nodes_dict = {terminal_node: utility(terminal_node.state) for terminal_node in terminal_nodes} 
     nodes_val_dict = dict(curr_terminal_nodes_dict)
-    # print(len(curr_terminal_nodes_dict))
-    # print(len(nodes_min_max_dict))
 
-    itr = 0
     while len(nodes_val_dict) != len(node_daughter_dict):
-        itr +=1
-        # print("WHile itr: " + str(itr))
 
-        # print(len(curr_terminal_nodes_dict))
-        # print(len(nodes_min_max_dict))
-
-
-        for1_itr = 0 
         for terminal_node in curr_terminal_nodes_dict:
-            for1_itr += 1
-            #print("for1 itr: " + str(for1_itr))
+
             val = curr_terminal_nodes_dict[terminal_node]
             parent = terminal_node.parent
-            node_daughter_dict[parent].remove(terminal_node)
-            node_daughter_dict[parent].add(val)
+            if type(parent) == Node:
+                node_daughter_dict[parent].remove(terminal_node)
+                node_daughter_dict[parent].add(val)
+            else:
+                pass
 
         new_terminal_nodes_dict = {}
-        for2_itr = 0
         for node in node_daughter_dict:
-            for2_itr +=1 
-            #print("for2 itr: " + str(for2_itr))
             if term_node_checker(node_daughter_dict[node]) is True and node not in nodes_val_dict:
                 val = val_finder(node, node_daughter_dict[node])
                 nodes_val_dict[node] = val
                 new_terminal_nodes_dict[node] = val
         curr_terminal_nodes_dict = new_terminal_nodes_dict
-    #print(nodes_val_dict)
     return nodes_val_dict
 
 
-# i want a function that finds the value of each node, from its daughters
 def val_finder(node, val_list):
     if player(node.state) == "X":
         return max(val_list)
@@ -243,6 +233,16 @@ def term_node_checker(node_def):
         if type(val) == Node:
             return False
     return True
+
+
+# Checkmate troubleshoot
+test = [["O", EMPTY, "X"],
+        ["O", "X", "X"],
+        [EMPTY, EMPTY, EMPTY]]
+# - Node tree script is producing the correct terminal node set
+print(minimax(test))
+
+
 
 # smaller func troubleshoot
 # test_consol = consol_min_max([(-1, 1), (-1, -1), (1, 1), (0, 0)])
