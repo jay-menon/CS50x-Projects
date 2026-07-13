@@ -24,11 +24,9 @@ def player(board):
     Returns player who has the next turn on a board.
     """
     XO_dict = count_XO(board)
-    if (XO_dict["X"] + XO_dict["O"])%2 == 0:
-        return "X"
-    else:
-        return "O"
-    raise NotImplementedError
+    if (XO_dict[X] + XO_dict[O])%2 == 0:
+        return X
+    return O
 
 
 def actions(board):
@@ -88,10 +86,10 @@ def winner(board):
         diag_TRBL.append(board[i][2-i])
     threes_list = rows_list + cols_list + [diag_TRBL, diag_TLBR]
     for three in threes_list:
-        if three.count("X") == 3:
-            return "X"
-        elif three.count("O") ==3:
-            return "O"
+        if three.count(X) == 3:
+            return X
+        elif three.count(O) ==3:
+            return O
     return None
     raise NotImplementedError
 
@@ -103,7 +101,7 @@ def terminal(board):
     XO_dict = count_XO(board)
     if winner(board) != None:
         return True
-    elif XO_dict["X"] + XO_dict["O"] == 9:
+    elif XO_dict[X] + XO_dict[O] == 9:
         return True
     else:
         return False
@@ -111,10 +109,10 @@ def terminal(board):
 
 
 def count_XO(board):
-    XO_dict = {"X":0, "O":0}
+    XO_dict = {X:0, O:0}
     for row in board:
-        XO_dict["X"] += row.count("X")
-        XO_dict["O"] += row.count("O")
+        XO_dict[X] += row.count(X)
+        XO_dict[O] += row.count(O)
     return XO_dict
 
 
@@ -122,9 +120,9 @@ def utility(board):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    if winner(board) == "X":
+    if winner(board) == X:
         return 1
-    elif winner(board) == "O":
+    elif winner(board) == O:
         return -1
     else:
         return 0
@@ -168,7 +166,7 @@ def minimax(board):
         curr_action_dict[initial_node.action] = action_utility
 
     curr_player = player(board)
-    if curr_player == "X":
+    if curr_player == X:
         incumbent = -2
         best_action = None
         for action in curr_action_dict:
@@ -182,6 +180,7 @@ def minimax(board):
             if curr_action_dict[action] < incumbent:
                 best_action = action
                 incumbent = curr_action_dict[action]
+
     return best_action
 
 
@@ -216,7 +215,7 @@ def val_dict_writer(terminal_nodes, node_daughter_dict):
 
 
 def val_finder(node, val_list):
-    if player(node.state) == "X":
+    if player(node.state) == X
         return max(val_list)
     else:
         return min(val_list)
