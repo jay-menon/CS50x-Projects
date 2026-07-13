@@ -44,6 +44,7 @@ def sym_simplifier(board):
     """
     Returns only actions that are not mathematically equivalent to any other actions from the list of all possible actions.
     Can be used as a faster alternative to the actions(board) function.
+    NOTE: Recommended to only use for initial actions as seems to overlook optimum plays later in node tree
     """
     # If the board is symmetrical along an axis, one action of a symmetric pair is added to degen_actions
     degen_actions = set()
@@ -169,7 +170,7 @@ def minimax(board):
                 terminal_nodes.add(curr_node)
             # If node is not terminal, find its daughter nodes from the next possible actions and record this in node_daughter_dict
             else:
-                poss_actions = sym_simplifier(curr_node.state)
+                poss_actions = actions(curr_node.state)
                 for poss_action in poss_actions:
                     daughter_node = Node(result(curr_node.state,poss_action), curr_node, poss_action)
                     frontier.add(daughter_node)
