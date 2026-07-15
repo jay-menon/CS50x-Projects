@@ -12,9 +12,11 @@ CKnave = Symbol("C is a Knave")
 # Puzzle 0
 # A says "I am both a knight and a knave."
 knowledge0 = And(
+    # Mutual exclusivity of person being either a knight or a knave:
     Or(AKnight,AKnave),
     Not(And(AKnight,AKnave)),
 
+    # Implications of A saying "I am both a knight and a knave."
     Implication(AKnight,And(AKnight,AKnave)),
     Implication(AKnave, Not(And(AKnight,AKnave)))
 )
@@ -23,12 +25,14 @@ knowledge0 = And(
 # A says "We are both knaves."
 # B says nothing.
 knowledge1 = And(
+    # Mutual exclusivity of person being either a knight or a knave:
     Or(AKnight,AKnave),
     Not(And(AKnight,AKnave)),
 
     Or(BKnight,BKnave),
     Not(And(BKnight,BKnave)),
 
+    # Implications of A saying "We are both knaves."
     Implication(AKnight,And(AKnave,BKnave)),
     Implication(AKnave, Not(And(AKnave,BKnave)))
 )
@@ -37,15 +41,18 @@ knowledge1 = And(
 # A says "We are the same kind."
 # B says "We are of different kinds."
 knowledge2 = And(
+    # Mutual exclusivity of person being either a knight or a knave:
     Or(AKnight,AKnave),
     Not(And(AKnight,AKnave)),
 
     Or(BKnight,BKnave),
     Not(And(BKnight,BKnave)),
 
+    # Implications of A saying "We are the same kind."
     Implication(AKnight, Or(And(AKnight,BKnight), And(AKnave,BKnave))),
     Implication(AKnave, Not(Or(And(AKnight,BKnight), And(AKnave,BKnave)))),
 
+    # Implications of B saying "We are of different kinds."
     Implication(BKnight,  Or(And(AKnight,BKnave), And(AKnave,BKnight))),
     Implication(BKnave, Not(Or(And(AKnight,BKnave), And(AKnave,BKnight))))
 )
@@ -56,6 +63,7 @@ knowledge2 = And(
 # B says "C is a knave."
 # C says "A is a knight."
 knowledge3 = And(
+    # Mutual exclusivity of person being either a knight or a knave:
     Or(AKnight,AKnave),
     Not(And(AKnight,AKnave)),
 
@@ -65,14 +73,17 @@ knowledge3 = And(
     Or(CKnight,CKnave),
     Not(And(CKnight,CKnave)),
 
+    # Implications of B saying "A said 'I am a knave'."
     Implication(BKnight, Implication(AKnight, AKnave)),
     Implication(BKnight, Implication(AKnave, AKnight)),
     Implication(BKnave, Implication(AKnight, AKnight)),
     Implication(BKnave, Implication(AKnave, AKnave)),
 
+    # Implications of B saying "C is a knave."
     Implication(BKnight, CKnave),
     Implication(BKnave, CKnight),
 
+    # Implications of C saying "A is a knight."
     Implication(CKnight, AKnight),
     Implication(CKnave, AKnave)
 
