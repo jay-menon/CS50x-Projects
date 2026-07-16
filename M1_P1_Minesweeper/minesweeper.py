@@ -1,7 +1,6 @@
 import itertools
 import random
 
-
 class Minesweeper():
     """
     Minesweeper game representation
@@ -105,27 +104,38 @@ class Sentence():
         """
         Returns the set of all cells in self.cells known to be mines.
         """
+        if len(self.cells) == self.count and self.cells:
+            return self.cells
+        return None
         raise NotImplementedError
 
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
         """
-        raise NotImplementedError
+        if self.count == 0 and self.cells:
+            return self.cells
+        return None    
+
 
     def mark_mine(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be a mine.
         """
-        raise NotImplementedError
+        if cell in self.cells:
+            self.count -= 1
+            self.cells.remove(cell)
+
 
     def mark_safe(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be safe.
         """
-        raise NotImplementedError
+        if cell in self.cells:
+            self.cells.remove(cell)
+
 
 
 class MinesweeperAI():
@@ -182,7 +192,63 @@ class MinesweeperAI():
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
-        raise NotImplementedError
+        # Input args are the cell that was just made as a move
+        # And how many adjacent cells to that move are mines
+
+        # 1. mark the cell as a move that has been made
+        self.moves_made.add(cell)
+        # 2. mark the cell as safe
+        self.mark_safe(cell)
+        print(self.safes)
+        # 3. add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
+        # Loop over all cells within one row and column
+        surr_cells = set()
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+
+                # Ignore the cell itself
+                if (i, j) == cell:
+                    continue
+
+                # Update count if cell in bounds and is mine
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    surr_cells.add((i, j))
+        self.knowledge.append(Sentence(surr_cells, count))
+        # 4. mark any additional cells as safe or as mines if it can be concluded based on the AI's knowledge base
+        # Use sum of knowledge in knowledge base to check if KB entails any cells being mines
+        entailment = True
+        while entailment is True:
+            entailment = False
+            cells_checked = set()
+            for sentence in self.knowledge:
+                for new_cell in sentence.cells:
+                    if new_cell not in cells_checked:
+                        mine_entailment = check_all(self.knowledge, new_cell, True, sentence.cells, {})
+                        safe_entailment = check_all(self.knowledge, new_cell, False, sentence.cells, {})
+                        if mine_entailment == True or safe_entailment == True:
+                            entailment = True
+                    if mine_entailment:
+                        self.mark_mine(new_cell)
+                    elif safe_entailment:
+                        self.mark_safe(new_cell)
+        # 5. add any new sentences to the AI's knowledge base if they can be inferred from existing knowledge
+        new_info = True
+        while new_info is True:
+            new_info = False
+            pairs_explored = set()
+            new_knowledge_list = []
+            for sentence_0 in self.knowledge:
+                for sentence_1 in self.knowledge:
+                    if sentence_0 != sentence_1 and (sentence_0,sentence_1) not in pairs_explored and (sentence_1,sentence_0) not in pairs_explored:
+                        new_sentence = subset_check(sentence_0, sentence_1)
+                        if new_sentence is not None:
+                            new_knowledge_list.append(new_sentence)
+                            new_info = True
+            self.knowledge += new_knowledge_list
+
+                
+
+
 
     def make_safe_move(self):
         """
@@ -193,6 +259,11 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
+        poss_moves = [move for move in self.safes if move not in self.moves_made]
+        if poss_moves:
+            return poss_moves[random.randrange(len(poss_moves))]
+        else:
+            return None
         raise NotImplementedError
 
     def make_random_move(self):
@@ -202,4 +273,73 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
+        moves = [(i,j) for i in range(0,self.height) for j in range(0,self.width)]
+        poss_moves = [move for move in moves if move not in self.moves_made and move not in self.mines]
+        rand_move = poss_moves[random.randrange(len(poss_moves))]
+        return rand_move
         raise NotImplementedError
+
+
+# HELPER FUNCTIONS
+
+def check_all(knowledge, query_cell, mine_check, cells, model):
+
+    # If model has an assignment for each symbol
+    # (The logic below might be a little confusing: we start with a list of symbols. The function is recursive, and every time it calls itself it pops one symbol from the symbols list and generates models from it. Thus, when the symbols list is empty, we know that we finished generating models with every possible truth assignment of symbols.)
+    if not cells:
+
+        # If knowledge base is true in model, then query must also be true
+        if KB_evaluate(knowledge, model):
+            return query_evaluate(query_cell, mine_check, model)
+        return True
+    else:
+
+        # Choose one of the remaining unused cells
+        remaining = cells.copy()
+        p = remaining.pop()
+
+        # Create a model where the symbol is true
+        model_true = model.copy()
+        model_true[p] = True
+
+        # Create a model where the symbol is false
+        model_false = model.copy()
+        model_false[p] = False
+
+        # Ensure entailment holds in both models
+        return(check_all(knowledge, query_cell, mine_check, remaining, model_true) and check_all(knowledge, query_cell, mine_check, remaining, model_false))
+    
+
+def KB_evaluate(knowledge_base, model):
+    # If knowledge base is true in the model, return True, otherwise False
+    eval = True
+    for sentence in knowledge_base:
+        count = 0
+        for cell in sentence.cells:
+            if model[cell] is True:
+                count += 1
+        if sentence.count != count:
+            return False
+    return True
+
+
+def query_evaluate(cell, mine_check, model):
+    if model[cell] == mine_check:
+        return True
+    return False
+
+
+def subset_check(sen1, sen2):
+    subset_cells = sen1.cells & sen2.cells
+    subset_count = abs(sen1.count - sen2.count)
+    return Sentence(subset_cells, subset_count)
+
+
+
+
+
+# TROUBLEHOOTING:
+
+test_move = (1,1)
+test_AI = MinesweeperAI()
+test_AI.add_knowledge(test_move,0)
