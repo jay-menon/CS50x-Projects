@@ -213,6 +213,23 @@ class MinesweeperAI():
                 if 0 <= i < self.height and 0 <= j < self.width:
                     surr_cells.add((i, j))
         self.knowledge.append(Sentence(surr_cells, count))
+        # 4. mark any additional cells as safe or as mines if it can be concluded based on the AI's knowledge base
+        # Use sum of knowledge in knowledge base to check if KB entails any cells being mines
+        entailment = True
+        while entailment is True:
+            entailment = False
+            cells_checked = set()
+            for sentence in self.knowledge:
+                for new_cell in sentence.cells:
+                    if new_cell not in cells_checked:
+                        mine_entailment = check_all(self.knowledge, new_cell, True, sentence.cells, {})
+                        safe_entailment = check_all(self.knowledge, new_cell, False, sentence.cells, {})
+                        if mine_entailment == True or safe_entailment == True:
+                            entailment = True
+                    if mine_entailment:
+                        self.mark_mine(new_cell)
+                    elif safe_entailment:
+                        self.mark_safe(new_cell)
 
     raise NotImplementedError
 
