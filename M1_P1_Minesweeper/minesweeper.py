@@ -231,8 +231,6 @@ class MinesweeperAI():
                     elif safe_entailment:
                         self.mark_safe(new_cell)
 
-    raise NotImplementedError
-
 
     def make_safe_move(self):
         """
@@ -256,3 +254,50 @@ class MinesweeperAI():
 
         raise NotImplementedError
 
+# HELPER FUNCTIONS
+
+def check_all(knowledge, query_cell, mine_check, cells, model):
+
+    # If model has an assignment for each symbol
+    # (The logic below might be a little confusing: we start with a list of symbols. The function is recursive, and every time it calls itself it pops one symbol from the symbols list and generates models from it. Thus, when the symbols list is empty, we know that we finished generating models with every possible truth assignment of symbols.)
+    if not cells:
+
+        # If knowledge base is true in model, then query must also be true
+        if KB_evaluate(knowledge, model):
+            return query_evaluate(query_cell, mine_check, model)
+        return True
+    else:
+
+        # Choose one of the remaining unused cells
+        remaining = cells.copy()
+        p = remaining.pop()
+
+        # Create a model where the symbol is true
+        model_true = model.copy()
+        model_true[p] = True
+
+        # Create a model where the symbol is false
+        model_false = model.copy()
+        model_false[p] = False
+
+        # Ensure entailment holds in both models
+        return(check_all(knowledge, query_cell, mine_check, remaining, model_true) and check_all(knowledge, query_cell, mine_check, remaining, model_false))
+    
+
+def KB_evaluate(knowledge_base, model):
+    # If knowledge base is true in the model, return True, otherwise False
+    eval = True
+    for sentence in knowledge_base:
+        count = 0
+        for cell in sentence.cells:
+            if model[cell] is True:
+                count += 1
+        if sentence.count != count:
+            return False
+    return True
+
+
+def query_evaluate(cell, mine_check, model):
+    if model[cell] == mine_check:
+        return True
+    return False
