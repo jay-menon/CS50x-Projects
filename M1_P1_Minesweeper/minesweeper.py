@@ -192,6 +192,28 @@ class MinesweeperAI():
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
+        # Input args are the cell that was just made as a move
+        # And how many adjacent cells to that move are mines
+
+        # 1. mark the cell as a move that has been made
+        self.moves_made.add(cell)
+        # 2. mark the cell as safe
+        self.mark_safe(cell)
+        # 3. add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
+        # Loop over all cells within one row and column
+        surr_cells = set()
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+
+                # Ignore the cell itself
+                if (i, j) == cell:
+                    continue
+
+                # Update count if cell in bounds and is mine
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    surr_cells.add((i, j))
+        self.knowledge.append(Sentence(surr_cells, count))
+
     raise NotImplementedError
 
 
