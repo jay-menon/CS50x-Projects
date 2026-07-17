@@ -220,26 +220,7 @@ class MinesweeperAI():
         self.knowledge.append(Sentence(surr_cells, count))
         # 4a. mark any additional cells as safe or as mines if it can be concluded based on the AI's knowledge base
         # 4b. Use sum of knowledge in knowledge base to check if KB entails any cells being mines
-        # entailment = True
-        # while entailment is True:
-        #     entailment = False
-        #     cells_checked = set()
-        #     for sentence in self.knowledge:
-        #         # If the sentence tells us explicitly which cells are safe/mines, add that knowledge first
-        #         if sentence.known_mines:
-        #             for mine_cell in sentence.cells:
 
-
-        #         for new_cell in sentence.cells:
-        #             if new_cell not in cells_checked:
-        #                 mine_entailment = check_all(self.knowledge, new_cell, True, sentence.cells, {})
-        #                 safe_entailment = check_all(self.knowledge, new_cell, False, sentence.cells, {})
-        #                 if mine_entailment == True or safe_entailment == True:
-        #                     entailment = True
-        #             if mine_entailment:
-        #                 self.mark_mine(new_cell)
-        #             elif safe_entailment:
-        #                 self.mark_safe(new_cell)
 
         (known, entailment, new_info) = (True, True, True)
         curr_kb = list(self.knowledge)
@@ -256,30 +237,7 @@ class MinesweeperAI():
                     known = True
                     for safes in list(sent.cells):
                         self.mark_safe(safes)
-            
-            # new_kb = []
-            # # Check if any sentences empty and removes from curr_kb
-            # for new_sent in curr_kb:
-            #     if new_sent.cells != set():
-            #         new_kb.append(new_sent)
-            # curr_kb = new_kb
 
-            # # Checks for any entailment
-            # cells_checked = set()
-            # for sentence in curr_kb:
-
-            #     for new_cell in sentence.cells:
-
-            #         if new_cell not in cells_checked:
-            #             cells_checked.add(new_cell)
-            #             mine_entailment = check_all(self.knowledge, new_cell, True, sentence.cells, {})
-            #             safe_entailment = check_all(self.knowledge, new_cell, False, sentence.cells, {})
-            #             if mine_entailment == True or safe_entailment == True:
-            #                 entailment = True
-            #         if mine_entailment:
-            #             self.mark_mine(new_cell)
-            #         elif safe_entailment:
-            #             self.mark_safe(new_cell)
 
             new_kb = []
             # Check if any sentences empty and removes from curr_kb
