@@ -202,13 +202,18 @@ class MinesweeperAI():
         # 3. add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
         # Loop over all cells within one row and column
         surr_cells = set()
+        new_count = int(count)
         for i in range(cell[0] - 1, cell[0] + 2):
             for j in range(cell[1] - 1, cell[1] + 2):
-
                 # Ignore the cell itself
                 if (i, j) == cell:
                     continue
-
+                # If we already know about the cell, take it out the sentence's cells
+                if (i, j) in self.mines:
+                    count -= 1
+                    continue
+                elif (i, j) in self.safes:
+                    continue
                 # Update count if cell in bounds and is mine
                 if 0 <= i < self.height and 0 <= j < self.width:
                     surr_cells.add((i, j))
@@ -236,9 +241,10 @@ class MinesweeperAI():
         #             elif safe_entailment:
         #                 self.mark_safe(new_cell)
 
-        (known, entailment) = (True, True)
+        (known, entailment, new_info) = (True, True, True)
         curr_kb = list(self.knowledge)
-        while (known or entailment) and curr_kb:
+        while (known or entailment or new_info) and curr_kb:
+
             # Check if any sentences make anything known
             known = False
             for sent in curr_kb:
@@ -251,20 +257,29 @@ class MinesweeperAI():
                     for safes in list(sent.cells):
                         self.mark_safe(safes)
             
-            # Checks for any entailment
-            cells_checked = set()
-            for sentence in curr_kb:
-                for new_cell in sentence.cells:
-                    if new_cell not in cells_checked:
-                        cells_checked.add(new_cell)
-                        mine_entailment = check_all(self.knowledge, new_cell, True, sentence.cells, {})
-                        safe_entailment = check_all(self.knowledge, new_cell, False, sentence.cells, {})
-                        if mine_entailment == True or safe_entailment == True:
-                            entailment = True
-                    if mine_entailment:
-                        self.mark_mine(new_cell)
-                    elif safe_entailment:
-                        self.mark_safe(new_cell)
+            # new_kb = []
+            # # Check if any sentences empty and removes from curr_kb
+            # for new_sent in curr_kb:
+            #     if new_sent.cells != set():
+            #         new_kb.append(new_sent)
+            # curr_kb = new_kb
+
+            # # Checks for any entailment
+            # cells_checked = set()
+            # for sentence in curr_kb:
+
+            #     for new_cell in sentence.cells:
+
+            #         if new_cell not in cells_checked:
+            #             cells_checked.add(new_cell)
+            #             mine_entailment = check_all(self.knowledge, new_cell, True, sentence.cells, {})
+            #             safe_entailment = check_all(self.knowledge, new_cell, False, sentence.cells, {})
+            #             if mine_entailment == True or safe_entailment == True:
+            #                 entailment = True
+            #         if mine_entailment:
+            #             self.mark_mine(new_cell)
+            #         elif safe_entailment:
+            #             self.mark_safe(new_cell)
 
             new_kb = []
             # Check if any sentences empty and removes from curr_kb
@@ -272,9 +287,26 @@ class MinesweeperAI():
                 if new_sent.cells != set():
                     new_kb.append(new_sent)
             curr_kb = new_kb
-            
+
+            # Check if any inferences can be made from sentences with overlapping cell sets
+            new_info = False
+            pairs_explored = set()
+            new_knowledge_list = []
+            for sentence_0 in curr_kb:
+                for sentence_1 in curr_kb:
+                    if sentence_0 != sentence_1 and (sentence_0,sentence_1) not in pairs_explored and (sentence_1,sentence_0) not in pairs_explored:
+                        new_sentence = subset_check(sentence_0, sentence_1)
+                        if new_sentence:
+                            new_knowledge_list.append(new_sentence)
+                            new_info = True
+            curr_kb += new_knowledge_list
+
+
+
         print(self.knowledge[0])
-        print(curr_kb)
+        for sent in curr_kb:
+            print(sent)
+        
         print(self.safes)
         print(self.mines)
 
@@ -290,8 +322,11 @@ class MinesweeperAI():
         """
         poss_moves = [move for move in self.safes if move not in self.moves_made]
         if poss_moves:
-            return poss_moves[random.randrange(len(poss_moves))]
+            print("ER")
+            return poss_moves[0]
+            
         else:
+            print("None")
             return None
 
 
@@ -303,7 +338,11 @@ class MinesweeperAI():
             2) are not known to be mines
         """
         moves = [(i,j) for i in range(0,self.height) for j in range(0,self.width)]
+        print(moves)
         poss_moves = [move for move in moves if move not in self.moves_made and move not in self.mines]
+        print(poss_moves)
+        print(len(poss_moves))
+        print(random.randrange(len(poss_moves)))
         rand_move = poss_moves[random.randrange(len(poss_moves))]
         return rand_move
 
@@ -355,11 +394,16 @@ def query_evaluate(cell, mine_check, model):
         return True
     return False
 
+def subset_check(sen1, sen2):
+    subset_cells = sen1.cells & sen2.cells
+    subset_count = abs(sen1.count - sen2.count)
+    return Sentence(subset_cells, subset_count)
+
 
 # TROUBLEHOOTING:
 
-test_move = (1,1)
-test_AI = MinesweeperAI()
-test_AI.add_knowledge(test_move,0)
+# test_move = (1,1)
+# test_AI = MinesweeperAI()
+# test_AI.add_knowledge(test_move,0)
 
 # 1,2,3 in add_knowledge are working
