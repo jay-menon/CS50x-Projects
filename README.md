@@ -178,8 +178,8 @@ Throughout this course, projects involve:
 | Module | Topic           | Status |
 | ------ | --------------- | ------ |
 | 0      | Search          | ✅      |
-| 1      | Knowledge       | ⬜      |
-| 2      | Uncertainty     | ⬜      |
+| 1      | Knowledge       | ✅      |
+| 2      | Uncertainty     | 🟨      |
 | 3      | Optimization    | ⬜      |
 | 4      | Learning        | ⬜      |
 | 5      | Neural Networks | ⬜      |
