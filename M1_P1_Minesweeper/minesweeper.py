@@ -194,6 +194,7 @@ class MinesweeperAI():
         """
         # Input args are the cell that was just made as a move
         # And how many adjacent cells to that move are mines
+        old_KB = list(self.knowledge)
 
         # 1. mark the cell as a move that has been made
         self.moves_made.add(cell)
@@ -201,7 +202,9 @@ class MinesweeperAI():
         self.mark_safe(cell)
         # 3. add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
         # Loop over all cells within one row and column
-        surr_cells = set()
+        if Sentence([cell], 0) not in self.knowledge:
+            self.knowledge.append(Sentence([cell], 0))
+        surr_cells = []
         new_count = int(count)
         for i in range(cell[0] - 1, cell[0] + 2):
             for j in range(cell[1] - 1, cell[1] + 2):
@@ -210,30 +213,51 @@ class MinesweeperAI():
                     continue
                 # If we already know about the cell, take it out the sentence's cells
                 if (i, j) in self.mines:
-                    count -= 1
+                    new_count -= 1
                     continue
                 elif (i, j) in self.safes:
                     continue
                 # Update count if cell in bounds and is mine
                 if 0 <= i < self.height and 0 <= j < self.width:
-                    surr_cells.add((i, j))
-        self.knowledge.append(Sentence(surr_cells, count))
+                    surr_cells.append((i, j))
+        self.knowledge.append(Sentence(surr_cells, new_count))
+
+        # Pre-cleaning:
+
+
+
+
         # 4a. mark any additional cells as safe or as mines if it can be concluded based on the AI's knowledge base
         # 4b. Use sum of knowledge in knowledge base to check if KB entails any cells being mines
         curr_kb = list(self.knowledge)
         new_kb = None
+        # itr = 0
         while curr_kb != new_kb:
+            # print("iteration " + str(itr))
+            # print()
 
             curr_kb = list(self.knowledge)
+            # print("current KB:")
+            # for i in curr_kb:
+            #     print(i)
+            # print()
             # 4. Check if any sentences make anything known
             for sent in list(self.knowledge):
                 if sent.known_mines():
                     for mine in list(sent.cells):
-                        self.mark_mine(mine)
+                        if mine not in self.mines:
+                            self.mark_mine(mine)
+                            self.knowledge.append(Sentence([mine], 1))
                 elif sent.known_safes():
-                    for safes in list(sent.cells):
-                        self.mark_safe(safes)
+                    for safe in list(sent.cells):
+                        if safe not in self.safes:
+                            self.mark_safe(safe)
+                            self.knowledge.append(Sentence([safe], 0))
 
+            # print("KB after knowns")
+            # for sent in self.knowledge:
+            #     print(sent)
+            # print()
             # 5. Check if any inferences can be made from sentences with overlapping cell sets
             pairs_explored = []
             for sentence_0 in list(self.knowledge):
@@ -241,16 +265,55 @@ class MinesweeperAI():
                     if sentence_0 != sentence_1 and (sentence_0,sentence_1) not in pairs_explored and (sentence_1,sentence_0) not in pairs_explored:
                         pairs_explored.append((sentence_0,sentence_1))
                         new_sentence = subset_check(sentence_0, sentence_1)
-                        if new_sentence not in self.knowledge:
-                            self.knowledge.append(new_sentence)
+                        if new_sentence.cells != set():
+                            if new_sentence not in self.knowledge:
+                                self.knowledge.append(new_sentence)
+            # print("KB after inference")
+            # for sent in self.knowledge:
+            #     print(sent)
+            # print()
+
+            # Remove sentences with empty cells set from knowledge base
+            clean_kb = [i for i in self.knowledge if i.cells != set()]
+            # Remove duplicate sentences from kb
+            no_dupe_kb = []
+            for sent in clean_kb:
+                if sent not in no_dupe_kb:
+                    no_dupe_kb.append(sent)
+            self.knowledge = no_dupe_kb
+            # print("KB after cleaning (newKB)")
+            # for sent in self.knowledge:
+            #     print(sent)
+            # print()
+
             new_kb = list(self.knowledge)
+            # print("Is new = old?")
+            # print(curr_kb == new_kb)
+            # print()
+            # itr += 1
+
+        # print("Sentences in current knowledge base:")
+        # for sent in self.knowledge:
+        #     print(sent)
+        # print("List of known safes:")
+        # print(self.safes)
+        # print("List of known mines:")
+        # print(self.mines)
+        # print()
+
+        # new_KB = list(self.knowledge)
+        # print("NEW KNOWLEDGE")
+        # for i in new_KB:
+        #     if i not in old_KB:
+        #         print(i)
 
 
-        for sent in curr_kb:
-            print(sent)
-        
-        print(self.safes)
+        print("mines")
         print(self.mines)
+        print()
+        print("safes")
+        print(self.safes)
+        print()
 
     def make_safe_move(self):
         """
@@ -263,11 +326,9 @@ class MinesweeperAI():
         """
         poss_moves = [move for move in self.safes if move not in self.moves_made]
         if poss_moves:
-            print("ER")
             return poss_moves[0]
             
         else:
-            print("None")
             return None
 
 
@@ -279,20 +340,23 @@ class MinesweeperAI():
             2) are not known to be mines
         """
         moves = [(i,j) for i in range(0,self.height) for j in range(0,self.width)]
-        print(moves)
         poss_moves = [move for move in moves if move not in self.moves_made and move not in self.mines]
-        print(poss_moves)
-        print(len(poss_moves))
-        print(random.randrange(len(poss_moves)))
-        rand_move = poss_moves[random.randrange(len(poss_moves))]
-        return rand_move
+        if poss_moves:
+            return poss_moves[random.randrange(len(poss_moves))]
+        else:
+            return None
 
 # HELPER FUNCTIONS
 
 def subset_check(sen1, sen2):
-    subset_cells = sen1.cells & sen2.cells
+    subset_cells = set()
+    if sen1.cells in sen2.cells:
+        subset_cells = set(i for i in sen2.cells if i not in sen1.cells)
+    elif sen2.cells in sen1.cells:
+        subset_cells = set(i for i in sen1.cells if i not in sen2.cells)
     subset_count = abs(sen1.count - sen2.count)
     return Sentence(subset_cells, subset_count)
+
 
 def check_all(knowledge, query_cell, mine_check, cells, model):
 
