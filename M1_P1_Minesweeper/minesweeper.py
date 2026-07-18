@@ -106,7 +106,7 @@ class Sentence():
         """
         if len(self.cells) == self.count and self.cells:
             return self.cells
-        return None
+        return set()
     
 
     def known_safes(self):
@@ -115,7 +115,7 @@ class Sentence():
         """
         if self.count == 0 and self.cells:
             return self.cells
-        return None    
+        return set()    
 
 
     def mark_mine(self, cell):
@@ -230,7 +230,7 @@ class MinesweeperAI():
                         if mine not in self.mines:
                             self.mark_mine(mine)
                             self.knowledge.append(Sentence([mine], 1))
-                elif sent.known_safes():
+                if sent.known_safes():
                     for safe in list(sent.cells):
                         if safe not in self.safes:
                             self.mark_safe(safe)
@@ -256,6 +256,7 @@ class MinesweeperAI():
                     no_dupe_kb.append(sent)
             self.knowledge = no_dupe_kb
             new_kb = list(self.knowledge)
+
 
     def make_safe_move(self):
         """
@@ -291,9 +292,9 @@ class MinesweeperAI():
 
 def subset_check(sen1, sen2):
     subset_cells = set()
-    if sen1.cells in sen2.cells:
+    if sen1.cells.issubset(sen2.cells):
         subset_cells = set(i for i in sen2.cells if i not in sen1.cells)
-    elif sen2.cells in sen1.cells:
+    elif sen2.cells.issubset(sen1.cells):
         subset_cells = set(i for i in sen1.cells if i not in sen2.cells)
     subset_count = abs(sen1.count - sen2.count)
     return Sentence(subset_cells, subset_count)
