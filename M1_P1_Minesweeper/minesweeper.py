@@ -1,4 +1,4 @@
-import itertools
+
 import random
 
 class Minesweeper():
@@ -108,7 +108,6 @@ class Sentence():
             return self.cells
         return set()
     
-
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
@@ -116,7 +115,6 @@ class Sentence():
         if self.count == 0 and self.cells:
             return self.cells
         return set()    
-
 
     def mark_mine(self, cell):
         """
@@ -127,7 +125,6 @@ class Sentence():
             self.count -= 1
             self.cells.remove(cell)
 
-
     def mark_safe(self, cell):
         """
         Updates internal knowledge representation given the fact that
@@ -135,7 +132,6 @@ class Sentence():
         """
         if cell in self.cells:
             self.cells.remove(cell)
-
 
 
 class MinesweeperAI():
@@ -193,14 +189,15 @@ class MinesweeperAI():
                if they can be inferred from existing knowledge
         """
 
-        # 1. mark the cell as a move that has been made
+        # 1. Mark the action cell as a move that has been made
         self.moves_made.add(cell)
-        # 2. mark the cell as safe
+        # 2. Mark the cell as safe
         self.mark_safe(cell)
-        # 3. add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
-        # Loop over all cells within one row and column
+        # 3. Add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
+        # Add the knowledge of the safe action to the knowledge base if it's not already in there
         if Sentence([cell], 0) not in self.knowledge:
             self.knowledge.append(Sentence([cell], 0))
+        # Loop over all cells within one row and column
         surr_cells = []
         new_count = int(count)
         for i in range(cell[0] - 1, cell[0] + 2):
@@ -208,18 +205,21 @@ class MinesweeperAI():
                 # Ignore the cell itself
                 if (i, j) == cell:
                     continue
-                # If we already know about the cell, take it out the sentence's cells
+                # If we already know about the cell, take it out the new sentence's cells set
                 if (i, j) in self.mines:
                     new_count -= 1
                     continue
                 elif (i, j) in self.safes:
                     continue
-                # Update count if cell in bounds and is mine
+                # If cell is in bounds and still unknown, add it to the new sentence's cells set
                 if 0 <= i < self.height and 0 <= j < self.width:
                     surr_cells.append((i, j))
+        # Add the new sentence to the knowledge base
         self.knowledge.append(Sentence(surr_cells, new_count))
 
+        # 4/5. Inferring new knowledge from the previous action
         (curr_kb, new_kb) = (0,1)
+        # Runs recursively until no new knowledge can be found
         while curr_kb != new_kb:
             curr_kb = list(self.knowledge)
 
@@ -257,7 +257,6 @@ class MinesweeperAI():
             self.knowledge = no_dupe_kb
             new_kb = list(self.knowledge)
 
-
     def make_safe_move(self):
         """
         Returns a safe cell to choose on the Minesweeper board.
@@ -272,7 +271,6 @@ class MinesweeperAI():
             return poss_moves[0]
         else:
             return None
-
 
     def make_random_move(self):
         """
@@ -290,12 +288,17 @@ class MinesweeperAI():
 
 # HELPER FUNCTIONS
 
-def subset_check(sen1, sen2):
+def subset_check(sen0, sen1):
+    """
+    Returns an inferred sentence from two input sentences.
+    """
+    # Checks if either sentence's cells set is a subset of the other and assigns subset to subset_cells
     subset_cells = set()
-    if sen1.cells.issubset(sen2.cells):
-        subset_cells = set(i for i in sen2.cells if i not in sen1.cells)
-    elif sen2.cells.issubset(sen1.cells):
-        subset_cells = set(i for i in sen1.cells if i not in sen2.cells)
-    subset_count = abs(sen1.count - sen2.count)
+    if sen0.cells.issubset(sen1.cells):
+        subset_cells = set(i for i in sen1.cells if i not in sen0.cells)
+    elif sen1.cells.issubset(sen0.cells):
+        subset_cells = set(i for i in sen0.cells if i not in sen1.cells)
+    # Assigns the count of the new sentence to subset_count
+    subset_count = abs(sen0.count - sen1.count)
     return Sentence(subset_cells, subset_count)
 
