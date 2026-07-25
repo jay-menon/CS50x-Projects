@@ -78,6 +78,16 @@ def transition_model(corpus, page, damping_factor):
     return prob_dict
     raise NotImplementedError
 
+def wheel_spin(prob_dist):
+    rand_int = random.randrange(1,1001)
+    lb = 0
+    for page in prob_dist:
+        ub = lb + prob_dist[page]*1000
+        if rand_int >= lb and rand_int <= ub:
+            return page
+        else:
+            lb = ub
+    return None
 
 def sample_pagerank(corpus, damping_factor, n):
     """
@@ -110,40 +120,43 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    N = len(corpus)
-    curr_prob_dict = {page:1/N for page in corpus}
-    curr_page = list(corpus)[random.randrange(0, len(corpus))]
+
+    # Corpus correction
+    corrected_corpus = dict(corpus)
+    for page in corpus:
+        if corpus[page] == set():
+            corrected_corpus[page] = set(corpus)
+
+    # Initialise page ranking
+    N = len(corrected_corpus)
+    curr_prob_dict = {page:1/N for page in corrected_corpus}
     convergence = False
+
     while not convergence:
-        next_page = transition_model(corpus, curr_page, damping_factor)
+        
+        old_dict = {page:round(curr_prob_dict[page], 3) for page in curr_prob_dict}
+        for page in curr_prob_dict:
+            sum = 0
+            for comp_page in corrected_corpus:
+                if page in corrected_corpus[comp_page]:
+                    sum += curr_prob_dict[comp_page]/len(corrected_corpus[comp_page])
+    
+            # Calculate new probability and update dictionary
+            new_prob = (1-damping_factor)*(1/N) + (damping_factor)*sum
+
+            curr_prob_dict[page] = new_prob
+
+        # Normalise dict
         sum = 0
-        for page in corpus:
-            if next_page in corpus[page]:
-                sum += curr_prob_dict[page]/len(corpus[page])
+        for page in curr_prob_dict:
+            sum += curr_prob_dict[page]
+        for page in curr_prob_dict:
+            curr_prob_dict[page] = curr_prob_dict[page]/sum
 
-        # Calculate new probability and update dictionary
-        #PR(p) = d(1/N) + (1-d)sum(PR(i)/num(i))
-        new_prob = damping_factor*(1/N) + (1-damping_factor)*sum
-        new_prob_dict = dict(curr_prob_dict)
-        new_prob_dict[next_page] = new_prob
-
-        # Check for convergence
-        round_curr_dict = {page:round(curr_prob_dict[page], 4) for page in curr_prob_dict}
-        round_next_dict = {page:round(new_prob_dict[page], 4) for page in new_prob_dict}
-        if round_curr_dict == round_next_dict:
+        new_dict = {page:round(curr_prob_dict[page], 3) for page in curr_prob_dict}
+        if old_dict == new_dict:
             convergence = True
-        curr_page = next_page
-        curr_prob_dict = round_next_dict
-
-    # Normalise probability dictionary
-    sum = 0
-    for page in curr_prob_dict:
-        sum += curr_prob_dict[page]
-
-    for page in curr_prob_dict:
-        curr_prob_dict[page] = curr_prob_dict[page]/sum
-
-    return curr_prob_dict
+    return new_dict
     raise NotImplementedError
 
 
@@ -151,18 +164,13 @@ if __name__ == "__main__":
     main()
 
 
-def wheel_spin(prob_dist):
-    rand_int = random.randrange(1,1001)
-    lb = 0
-    for page in prob_dist:
-        ub = lb + prob_dist[page]*1000
-        if rand_int >= lb and rand_int <= ub:
-            return page
-        else:
-            lb = ub
-    return None
+
 
 # NOTES:
 # In the random surfer model, do we allow the CURRENT page to be an option in the cases where:
     # we make link move but page has no links so next link can be any page - YES
     # we are make random move and so next page can be any page - YES
+    # we treat linkless pages as having link to all, including itself
+
+# Do we iterate through the dictionary and recalculate every time
+# Also do we re-normalise after every page iteration or after every dictionary iteration
