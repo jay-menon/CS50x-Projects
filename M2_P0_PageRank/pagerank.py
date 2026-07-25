@@ -3,24 +3,25 @@ import random
 import re
 import sys
 
+# Algorithm Parameters:
 DAMPING = 0.85
 SAMPLES = 10000
-
 
 def main():
     if len(sys.argv) != 2:
         sys.exit("Usage: python pagerank.py corpus")
-    # Call crawl on one of the directories corpus0/1/2 which parses it and outputs corpus dictionary
+    # Call crawl a chosen corpus directory: outputs corpus dictionary
     corpus = crawl(sys.argv[1])
+    # Runs sample PageRank algorithm on chosen corpus and prints relative ranks of each page
     ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
     print(f"PageRank Results from Sampling (n = {SAMPLES})")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
+    # Runs iterative PageRank algorithm on chosen corpus and prints relative ranks of each page
     ranks = iterate_pagerank(corpus, DAMPING)
     print(f"PageRank Results from Iteration")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
-
 
 def crawl(directory):
     """
@@ -29,7 +30,6 @@ def crawl(directory):
     a list of all other pages in the corpus that are linked to by the page.
     """
     pages = dict()
-
     # Extract all links from HTML files
     # os.listdir(directory) returns a list of strings if all the filenames in the arg directory
     for filename in os.listdir(directory):
@@ -43,10 +43,8 @@ def crawl(directory):
             # Make sure that the value pages do not include the definition page - prevents self-referencing
             pages[filename] = set(links) - {filename}
 
-    # Only include links to other pages in the corpus
-    # Currently the script above finds ALL links that a page links to but we're only interested in the links to pages that
-    # we can find the next links for (i.e. pages in the corpus)
-    # Hence this script removes all values that are not also definitions in the pages dictionary
+    # Currently script above finds ALL links that a page links to but we're only interested in the links to pages that are in the corpus
+    # Hence this script removes all values (links) that are not also definitions in the pages dictionary
     for filename in pages:
         pages[filename] = set(
             link for link in pages[filename]
@@ -54,7 +52,6 @@ def crawl(directory):
         )
 
     return pages
-
 
 def transition_model(corpus, page, damping_factor):
     """
@@ -65,29 +62,29 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-
+    # Initially assigns every page uniform probability across all N pages in corpus
     N = len(corpus)
     prob_dict = {comp_page:(1-damping_factor)*(1/N) for comp_page in corpus}
+    # If a page is also a linked by the current page, add the probability that the page is chosen from the links
     num_links = len(corpus[page])
-    if num_links != 0:
-        for comp_page in corpus[page]:
-            prob_dict[comp_page] += damping_factor*(1/num_links)
-    else:
-        for comp_page in corpus[page]:
-            prob_dict[comp_page] += damping_factor*(1/N)
+    for comp_page in corpus[page]:
+        prob_dict[comp_page] += damping_factor*(1/num_links)
     return prob_dict
-    raise NotImplementedError
 
 def wheel_spin(prob_dist):
-    rand_int = random.randrange(1,1001)
+    '''
+    Return a page from the corpus, chosen by the relative probablities of each page in the input distribution.
+    '''
+    # Choose a random integer from 1 to 100 (equivalent of spinning a wheel)
+    rand_int = random.randrange(1,101)
+    # Choose page depending on which probability bound the random integer falls in
     lb = 0
     for page in prob_dist:
-        ub = lb + prob_dist[page]*1000
+        ub = lb + prob_dist[page]*100
         if rand_int >= lb and rand_int <= ub:
             return page
         else:
             lb = ub
-    return None
 
 def sample_pagerank(corpus, damping_factor, n):
     """
@@ -98,12 +95,13 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    # Corpus correction
+    # Corpus correction to treat linkless pages as having a link to every page
     corrected_corpus = dict(corpus)
     for page in corpus:
         if corpus[page] == set():
             corrected_corpus[page] = set(corpus)
-
+    # Start at a random page and keep using transition model to find next one for n iterations
+    # Track how many times each page visited in freq_dict
     freq_dict = {page:0 for page in corpus}
     curr_page = list(corrected_corpus)[random.randrange(0, len(corrected_corpus))]
     for i in range(0, n):
@@ -111,11 +109,10 @@ def sample_pagerank(corpus, damping_factor, n):
         next_page = wheel_spin(prob_dist)
         curr_page = next_page
         freq_dict[curr_page] += 1
+    # Normalise the frequency dictionary to have frequencies sum to 1
     for page in freq_dict:
         freq_dict[page] = freq_dict[page]/n
     return freq_dict
-    raise NotImplementedError
-
 
 def iterate_pagerank(corpus, damping_factor):
     """
@@ -126,57 +123,37 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-
-    # Corpus correction
+    # Corpus correction to treat linkless pages as having a link to every page
     corrected_corpus = dict(corpus)
     for page in corpus:
         if corpus[page] == set():
             corrected_corpus[page] = set(corpus)
-
-    # Initialise page ranking
+    # Initialise ranking with every page having uniform importance
     N = len(corrected_corpus)
     curr_prob_dict = {page:1/N for page in corrected_corpus}
     convergence = False
-
+    # Run iterations until page rankings no longer change significantly
     while not convergence:
-        
         old_dict = {page:round(curr_prob_dict[page], 3) for page in curr_prob_dict}
+        # Calculate new probability and update probability dictionary
         for page in curr_prob_dict:
             sum = 0
             for comp_page in corrected_corpus:
                 if page in corrected_corpus[comp_page]:
                     sum += curr_prob_dict[comp_page]/len(corrected_corpus[comp_page])
-    
-            # Calculate new probability and update dictionary
             new_prob = (1-damping_factor)*(1/N) + (damping_factor)*sum
-
             curr_prob_dict[page] = new_prob
-
-        # Normalise dict
+        # Normalise dictionary, making sure all probabilities sum to 1
         sum = 0
         for page in curr_prob_dict:
             sum += curr_prob_dict[page]
         for page in curr_prob_dict:
             curr_prob_dict[page] = curr_prob_dict[page]/sum
-
+        # Compare previous and current probability dictionaries to check if probabilities have converged
         new_dict = {page:round(curr_prob_dict[page], 3) for page in curr_prob_dict}
         if old_dict == new_dict:
             convergence = True
     return new_dict
-    raise NotImplementedError
-
 
 if __name__ == "__main__":
     main()
-
-
-
-
-# NOTES:
-# In the random surfer model, do we allow the CURRENT page to be an option in the cases where:
-    # we make link move but page has no links so next link can be any page - YES
-    # we are make random move and so next page can be any page - YES
-    # we treat linkless pages as having link to all, including itself
-
-# Do we iterate through the dictionary and recalculate every time
-# Also do we re-normalise after every page iteration or after every dictionary iteration
