@@ -65,14 +65,17 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    prob_int = random.randrange(1, 101)
-    if prob_int <= int(damping_factor/100):
-        page_list = list(corpus[page])
+
+    N = len(corpus)
+    prob_dict = {comp_page:(1-damping_factor)*(1/N) for comp_page in corpus}
+    num_links = len(corpus[page])
+    if num_links != 0:
+        for comp_page in corpus[page]:
+            prob_dict[comp_page] += damping_factor*(1/num_links)
     else:
-        page_list = list(set(corpus)-{page})
-    rand_idx = random.randrange(0, len(page_list))
-    next_page = page_list[rand_idx]
-    return next_page
+        for comp_page in corpus[page]:
+            prob_dict[comp_page] += damping_factor*(1/N)
+    return prob_dict
     raise NotImplementedError
 
 
@@ -88,10 +91,10 @@ def sample_pagerank(corpus, damping_factor, n):
     freq_dict = {page:0 for page in corpus}
     curr_page = list(corpus)[random.randrange(0, len(corpus))]
     for i in range(0, n):
-        next_page = transition_model(corpus, curr_page, damping_factor)
+        prob_dist = transition_model(corpus, curr_page, damping_factor)
+        next_page = wheel_spin(prob_dist)
         curr_page = next_page
         freq_dict[curr_page] += 1
-    print(freq_dict)
     for page in freq_dict:
         freq_dict[page] = freq_dict[page]/n
     return freq_dict
@@ -146,3 +149,20 @@ def iterate_pagerank(corpus, damping_factor):
 
 if __name__ == "__main__":
     main()
+
+
+def wheel_spin(prob_dist):
+    rand_int = random.randrange(1,1001)
+    lb = 0
+    for page in prob_dist:
+        ub = lb + prob_dist[page]*1000
+        if rand_int >= lb and rand_int <= ub:
+            return page
+        else:
+            lb = ub
+    return None
+
+# NOTES:
+# In the random surfer model, do we allow the CURRENT page to be an option in the cases where:
+    # we make link move but page has no links so next link can be any page - YES
+    # we are make random move and so next page can be any page - YES
