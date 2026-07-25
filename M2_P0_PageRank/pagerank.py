@@ -108,6 +108,40 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+    N = len(corpus)
+    curr_prob_dict = {page:1/N for page in corpus}
+    curr_page = list(corpus)[random.randrange(0, len(corpus))]
+    convergence = False
+    while not convergence:
+        next_page = transition_model(corpus, curr_page, damping_factor)
+        sum = 0
+        for page in corpus:
+            if next_page in corpus[page]:
+                sum += curr_prob_dict[page]/len(corpus[page])
+
+        # Calculate new probability and update dictionary
+        #PR(p) = d(1/N) + (1-d)sum(PR(i)/num(i))
+        new_prob = damping_factor*(1/N) + (1-damping_factor)*sum
+        new_prob_dict = dict(curr_prob_dict)
+        new_prob_dict[next_page] = new_prob
+
+        # Check for convergence
+        round_curr_dict = {page:round(curr_prob_dict[page], 4) for page in curr_prob_dict}
+        round_next_dict = {page:round(new_prob_dict[page], 4) for page in new_prob_dict}
+        if round_curr_dict == round_next_dict:
+            convergence = True
+        curr_page = next_page
+        curr_prob_dict = round_next_dict
+
+    # Normalise probability dictionary
+    sum = 0
+    for page in curr_prob_dict:
+        sum += curr_prob_dict[page]
+
+    for page in curr_prob_dict:
+        curr_prob_dict[page] = curr_prob_dict[page]/sum
+
+    return curr_prob_dict
     raise NotImplementedError
 
 
