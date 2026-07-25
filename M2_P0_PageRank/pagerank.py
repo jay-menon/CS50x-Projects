@@ -91,10 +91,9 @@ def sample_pagerank(corpus, damping_factor, n):
         next_page = transition_model(corpus, curr_page, damping_factor)
         curr_page = next_page
         freq_dict[curr_page] += 1
-
+    print(freq_dict)
     for page in freq_dict:
         freq_dict[page] = freq_dict[page]/n
-
     return freq_dict
     raise NotImplementedError
 
