@@ -73,7 +73,6 @@ def transition_model(corpus, page, damping_factor):
     rand_idx = random.randrange(0, len(page_list))
     next_page = page_list[rand_idx]
     return next_page
-
     raise NotImplementedError
 
 
@@ -86,6 +85,17 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+    freq_dict = {page:0 for page in corpus}
+    curr_page = list(corpus)[random.randrange(0, len(corpus))]
+    for i in range(0, n):
+        next_page = transition_model(corpus, curr_page, damping_factor)
+        curr_page = next_page
+        freq_dict[curr_page] += 1
+
+    for page in freq_dict:
+        freq_dict[page] = freq_dict[page]/n
+
+    return freq_dict
     raise NotImplementedError
 
 
