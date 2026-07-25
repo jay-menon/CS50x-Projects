@@ -98,10 +98,16 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
+    # Corpus correction
+    corrected_corpus = dict(corpus)
+    for page in corpus:
+        if corpus[page] == set():
+            corrected_corpus[page] = set(corpus)
+
     freq_dict = {page:0 for page in corpus}
-    curr_page = list(corpus)[random.randrange(0, len(corpus))]
+    curr_page = list(corrected_corpus)[random.randrange(0, len(corrected_corpus))]
     for i in range(0, n):
-        prob_dist = transition_model(corpus, curr_page, damping_factor)
+        prob_dist = transition_model(corrected_corpus, curr_page, damping_factor)
         next_page = wheel_spin(prob_dist)
         curr_page = next_page
         freq_dict[curr_page] += 1
