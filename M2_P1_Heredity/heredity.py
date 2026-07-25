@@ -42,9 +42,11 @@ def main():
     # Check for proper usage
     if len(sys.argv) != 2:
         sys.exit("Usage: python heredity.py data.csv")
+    # Records all information from csv into dictionary called people
+    # Use people[person_name][csv_col_name] to access that data
     people = load_data(sys.argv[1])
 
-    # Keep track of gene and trait probabilities for each person
+    # Keep track of gene and trait probabilities for each person in probabilities dictionary
     probabilities = {
         person: {
             "gene": {
@@ -64,7 +66,7 @@ def main():
     names = set(people)
     for have_trait in powerset(names):
 
-        # Check if current set of people violates known information
+        # Check if current set of people violates known information: ignore that potential subset if it does
         fails_evidence = any(
             (people[person]["trait"] is not None and
              people[person]["trait"] != (person in have_trait))
@@ -73,7 +75,8 @@ def main():
         if fails_evidence:
             continue
 
-        # Loop over all sets of people who might have the gene
+        # If subset make it to here, all the people in that subset could have the gene
+        # Nested for loops iterate over all possible gene arrangements of the people in the gene-havers subset
         for one_gene in powerset(names):
             for two_genes in powerset(names - one_gene):
 
@@ -118,7 +121,7 @@ def load_data(filename):
 
 def powerset(s):
     """
-    Return a list of all possible subsets of set s.
+    Return a list of all possible subsets of set s, including the empty set.
     """
     s = list(s)
     return [
