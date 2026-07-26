@@ -142,7 +142,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    raise NotImplementedError
+
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
@@ -152,7 +152,16 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    raise NotImplementedError
+    for person in one_gene:
+        probabilities[person]["gene"][1] += p
+    for person in two_genes:
+        probabilities[person]["gene"][2] += p
+    for person in (set(probabilities) - (two_genes | one_gene)):
+        probabilities[person]["gene"][0] += p
+    for person in have_trait:
+        probabilities[person]["trait"][True] += p
+    for person in (set(probabilities) - have_trait):
+        probabilities[person]["trait"][False] += p
 
 
 def normalize(probabilities):
