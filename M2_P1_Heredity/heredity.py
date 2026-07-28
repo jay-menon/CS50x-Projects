@@ -186,10 +186,17 @@ def joint_probability(people, one_gene, two_genes, have_trait):
             child_dict[person] = [gene_num, trait]
             child_parent_dict[person] = [people[person]["mother"], people[person]["father"]]
 
+
     # Calculate child probabilities:
-    for child in child_dict:
-        [gene_prob, trait_prob] = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]])
-        indv_probs.append(gene_prob*trait_prob)
+    while child_dict:
+        new_child_dict = dict(child_dict)
+        for child in child_dict:
+            if child_parent_dict[child][0] in parent_dict and child_parent_dict[child][1] in parent_dict:
+                [gene_prob, trait_prob] = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]])
+                indv_probs.append(gene_prob*trait_prob)
+                new_child_dict.pop(child)
+                parent_dict[child] = child_dict[child]
+        child_dict = new_child_dict
 
     # Calculate overall joint probability:
     joint_prob = indv_probs[0]
