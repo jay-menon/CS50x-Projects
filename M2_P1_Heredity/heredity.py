@@ -40,24 +40,25 @@ PROBS = {
 # Dictionary storing the probability a parent with a given number of "the gene" will pass down either 0 or 1 of "the gene"
 PASSDOWN_PROBS = {
     # Given the parent has 0 of "the gene":
-    0:{
+    0: {
         # What is the probability of them passing down 0 or 1 of the gene:
         0: 1 - PROBS["mutation"],
         1: PROBS["mutation"]
     },
     # Given the parent has 1 of "the gene":
-    1:{
+    1: {
         # What is the probability of them passing down 0 or 1 of the gene:
         0: 0.5,
         1: 0.5
     },
     # Given the parent has 2 of "the gene":
-    2:{
+    2: {
         # What is the probability of them passing down 0 or 1 of the gene:
         0: PROBS["mutation"],
         1: 1 - PROBS["mutation"]
     }
 }
+
 
 def main():
 
