@@ -40,16 +40,16 @@ PASSDOWN_PROBS = {
     # Given number of genes parent has:
     0:{
         # What is the probability of passing down 0 or 1 of the gene
-        0: 1 - PROBS("mutation"),
-        1: PROBS("mutation")
+        0: 1 - PROBS["mutation"],
+        1: PROBS["mutation"]
     },
     1:{
         0: 0.5,
         1: 0.5
     },
     2:{
-        0: PROBS("mutation"),
-        1: 1 - PROBS("mutation")
+        0: PROBS["mutation"],
+        1: 1 - PROBS["mutation"]
     }
 }
 
@@ -180,7 +180,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         if not people[person]["mother"] and not people[person]["father"]:
             parent_dict[person] = [gene_num, trait]
             # Calculate parent probabilities as they are unconditional
-            [gene_prob, trait_prob] = parent_prob(gene_num, trait, PROBS)
+            [gene_prob, trait_prob] = parent_prob(gene_num, trait)
             indv_probs.append(gene_prob*trait_prob)
         else:
             child_dict[person] = [gene_num, trait]
@@ -188,7 +188,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
 
     # Calculate child probabilities:
     for child in child_dict:
-        [gene_prob, trait_prob] = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]], PROBS)
+        [gene_prob, trait_prob] = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]])
         indv_probs.append(gene_prob*trait_prob)
 
     # Calculate overall joint probability:
@@ -199,7 +199,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     return joint_prob
 
 
-def parent_prob(gene_num, trait, PROBS):
+def parent_prob(gene_num, trait):
     
     prob = [None,None]
     prob[0] = PROBS["gene"][gene_num]
@@ -210,22 +210,27 @@ def parent_prob(gene_num, trait, PROBS):
     return prob
 
 
-def child_prob(child_status, mum_status, dad_status, PROBS):
+def child_prob(child_status, mum_status, dad_status):
 
     # Model gene scenarios that could result in child having gene_num
     gene_prob = 0
-    for mut_mum in [-1,0,1]:
-        for mut_dad in [-1,0,1]:
-            if (mum_status[0] + mut_mum <= 0 or mum_status[0] + mut_mum >= 3) or (dad_status[0] + mut_dad <= 0 or dad_status[0] + mut_dad >= 3):
-                continue
-            elif mum_status[0] + mut_mum + dad_status[0] + mut_dad == child_status[0]:
-                non_mutated = [mut_mum, mut_dad].count(0)
-                if non_mutated == 0:
-                    gene_prob += (1 - PROBS["mutation"])*(1 - PROBS["mutation"])
-                elif non_mutated == 1:
-                    gene_prob += (1 - PROBS["mutation"])*(PROBS["mutation"])
-                else:
-                    gene_prob += (PROBS["mutation"])*(PROBS["mutation"])
+    # for mut_mum in [-1,0,1]:
+    #     for mut_dad in [-1,0,1]:
+    #         if (mum_status[0] + mut_mum <= 0 or mum_status[0] + mut_mum >= 3) or (dad_status[0] + mut_dad <= 0 or dad_status[0] + mut_dad >= 3):
+    #             continue
+    #         elif mum_status[0] + mut_mum + dad_status[0] + mut_dad == child_status[0]:
+    #             non_mutated = [mut_mum, mut_dad].count(0)
+    #             if non_mutated == 0:
+    #                 gene_prob += (1 - PROBS["mutation"])*(1 - PROBS["mutation"])
+    #             elif non_mutated == 1:
+    #                 gene_prob += (1 - PROBS["mutation"])*(PROBS["mutation"])
+    #             else:
+    #                 gene_prob += (PROBS["mutation"])*(PROBS["mutation"])
+
+    for mum_passdown in [0,1]:
+        for dad_passdown in [0,1]:
+            if mum_passdown + dad_passdown == child_status[0]:
+                gene_prob += PASSDOWN_PROBS[mum_status[0]][mum_passdown] * PASSDOWN_PROBS[dad_status[0]][dad_passdown] 
     # Model trait stuff
     if child_status[1]:
         trait_prob = PROBS["trait"][child_status[0]][True]
