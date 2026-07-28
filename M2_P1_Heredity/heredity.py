@@ -36,6 +36,22 @@ PROBS = {
     "mutation": 0.01
 }
 
+PASSDOWN_PROBS = {
+    # Given number of genes parent has:
+    0:{
+        # What is the probability of passing down 0 or 1 of the gene
+        0: 1 - PROBS("mutation"),
+        1: PROBS("mutation")
+    },
+    1:{
+        0: 0.5,
+        1: 0.5
+    },
+    2:{
+        0: PROBS("mutation"),
+        1: 1 - PROBS("mutation")
+    }
+}
 
 def main():
 
