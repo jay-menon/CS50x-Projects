@@ -2,6 +2,7 @@ import csv
 import itertools
 import sys
 
+# Dictionary containing all gene/trait probabilities supplied by course
 PROBS = {
 
     # Unconditional probabilities for having gene
@@ -36,18 +37,23 @@ PROBS = {
     "mutation": 0.01
 }
 
+# Dictionary storing the probability a parent with a given number of "the gene" will pass down either 0 or 1 of "the gene"
 PASSDOWN_PROBS = {
-    # Given number of genes parent has:
+    # Given the parent has 0 of "the gene":
     0:{
-        # What is the probability of passing down 0 or 1 of the gene
+        # What is the probability of them passing down 0 or 1 of the gene:
         0: 1 - PROBS["mutation"],
         1: PROBS["mutation"]
     },
+    # Given the parent has 1 of "the gene":
     1:{
+        # What is the probability of them passing down 0 or 1 of the gene:
         0: 0.5,
         1: 0.5
     },
+    # Given the parent has 2 of "the gene":
     2:{
+        # What is the probability of them passing down 0 or 1 of the gene:
         0: PROBS["mutation"],
         1: 1 - PROBS["mutation"]
     }
@@ -164,86 +170,83 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     child_parent_dict = {}
     indv_probs = []
     for person in people:
-        # Find person's gene number in this model
+        # Find each person's gene number in this model
         if person in one_gene:
             gene_num = 1
         elif person in two_genes:
             gene_num = 2
         else:
             gene_num = 0
-        # Find person's trait status in this model
+        # Find each person's trait status in this model
         if person in have_trait:
             trait = True
         else:
             trait = False
-        # Find out if person is child or parent in this model and add all info to dictionaries
+        # Find out if each person is child or parent in this model and add all info to dictionaries
+        # Note that initially, only the MOST senior parents make it into parent_dict, all else into child_dict
         if not people[person]["mother"] and not people[person]["father"]:
             parent_dict[person] = [gene_num, trait]
-            # Calculate parent probabilities as they are unconditional
-            [gene_prob, trait_prob] = parent_prob(gene_num, trait)
-            indv_probs.append(gene_prob*trait_prob)
+            # Calculate most senior parent's probabilities
+            indv_prob = parent_prob(gene_num, trait)
+            indv_probs.append(indv_prob)
+        # For the children, note their status and parent relationship: will calculate probability later
         else:
             child_dict[person] = [gene_num, trait]
             child_parent_dict[person] = [people[person]["mother"], people[person]["father"]]
 
-
-    # Calculate child probabilities:
+    # Calculate all children's probabilities:
     while child_dict:
         new_child_dict = dict(child_dict)
         for child in child_dict:
+            # Probability is calculated only if we have info on the child's parents in parent_dict
             if child_parent_dict[child][0] in parent_dict and child_parent_dict[child][1] in parent_dict:
-                [gene_prob, trait_prob] = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]])
-                indv_probs.append(gene_prob*trait_prob)
+                indv_prob = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]])
+                indv_probs.append(indv_prob)
+                # After calculating probability, child is moved from child_dict to parent_dict to calculate the next generation, if there is one
                 new_child_dict.pop(child)
                 parent_dict[child] = child_dict[child]
+        # While loop iterates until all children in child_dict have been processed
         child_dict = new_child_dict
 
-    # Calculate overall joint probability:
+    # Calculate joint probability by finding product of every person's individual probabilities:
     joint_prob = indv_probs[0]
     for prob in indv_probs[1:]:
         joint_prob *= prob
-
     return joint_prob
 
 
 def parent_prob(gene_num, trait):
-    
-    prob = [None,None]
-    prob[0] = PROBS["gene"][gene_num]
+    '''
+    Returns the probability that a parent has the gene number and trait configuration passed as argument.
+    '''
+    # Simply cites the probabilites from the PROBS dictionary
+    gene_prob = PROBS["gene"][gene_num]
     if trait:
-        prob[1] = PROBS["trait"][gene_num][True]
+        trait_prob = PROBS["trait"][gene_num][True]
     else:
-        prob[1] = PROBS["trait"][gene_num][False]
-    return prob
+        trait_prob = PROBS["trait"][gene_num][False]
+    return gene_prob * trait_prob
 
 
 def child_prob(child_status, mum_status, dad_status):
-
-    # Model gene scenarios that could result in child having gene_num
+    '''
+    Returns the probability that the child has the gene/trait arrangement passed in child_status, given the 
+    gene/trait arrangements of the parents passed in mum_status and dad_status.
+    '''
     gene_prob = 0
-    # for mut_mum in [-1,0,1]:
-    #     for mut_dad in [-1,0,1]:
-    #         if (mum_status[0] + mut_mum <= 0 or mum_status[0] + mut_mum >= 3) or (dad_status[0] + mut_dad <= 0 or dad_status[0] + mut_dad >= 3):
-    #             continue
-    #         elif mum_status[0] + mut_mum + dad_status[0] + mut_dad == child_status[0]:
-    #             non_mutated = [mut_mum, mut_dad].count(0)
-    #             if non_mutated == 0:
-    #                 gene_prob += (1 - PROBS["mutation"])*(1 - PROBS["mutation"])
-    #             elif non_mutated == 1:
-    #                 gene_prob += (1 - PROBS["mutation"])*(PROBS["mutation"])
-    #             else:
-    #                 gene_prob += (PROBS["mutation"])*(PROBS["mutation"])
-
-    for mum_passdown in [0,1]:
-        for dad_passdown in [0,1]:
+    # Iterates through all possible passdown scenarios from the mother/father
+    for mum_passdown in [0, 1]:
+        for dad_passdown in [0, 1]:
+            # Ignores any scenarios that don't result in the number of genes specified in child_status
             if mum_passdown + dad_passdown == child_status[0]:
+                # Calculates the probability of that scenario using the probabilities in PASSDOWN_PROBS dictionary
                 gene_prob += PASSDOWN_PROBS[mum_status[0]][mum_passdown] * PASSDOWN_PROBS[dad_status[0]][dad_passdown] 
-    # Model trait stuff
+    # Finds the probability that child's trait status is the same as what is specified in child_status using PROBS dictionary
     if child_status[1]:
         trait_prob = PROBS["trait"][child_status[0]][True]
     else:
         trait_prob = PROBS["trait"][child_status[0]][False]
-    return [gene_prob, trait_prob]
+    return gene_prob * trait_prob
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
@@ -280,9 +283,9 @@ def normalize(probabilities):
             trait_sum += probabilities[person]["trait"][trait_status]
         # Normalise probabilities relative to that sum
         for gene_count in probabilities[person]["gene"]:
-            probabilities[person]["gene"][gene_count] = probabilities[person]["gene"][gene_count]/gene_sum
+            probabilities[person]["gene"][gene_count] = probabilities[person]["gene"][gene_count] / gene_sum
         for trait_status in probabilities[person]["trait"]:
-            probabilities[person]["trait"][trait_status] = probabilities[person]["trait"][trait_status]/trait_sum
+            probabilities[person]["trait"][trait_status] = probabilities[person]["trait"][trait_status] / trait_sum
 
 
 if __name__ == "__main__":
