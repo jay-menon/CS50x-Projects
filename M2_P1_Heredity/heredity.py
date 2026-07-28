@@ -142,7 +142,80 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
+    # Organise initial information
+    parent_dict = {}
+    child_dict = {}
+    child_parent_dict = {}
+    indv_probs = []
+    for person in people:
+        # Find person's gene number in this model
+        if person in one_gene:
+            gene_num = 1
+        elif person in two_genes:
+            gene_num = 2
+        else:
+            gene_num = 0
+        # Find person's trait status in this model
+        if person in have_trait:
+            trait = True
+        else:
+            trait = False
+        # Find out if person is child or parent in this model and add all info to dictionaries
+        if not people[person]["mother"] and not people[person]["father"]:
+            parent_dict[person] = [gene_num, trait]
+            # Calculate parent probabilities as they are unconditional
+            [gene_prob, trait_prob] = parent_prob(gene_num, trait, PROBS)
+            indv_probs.append(gene_prob*trait_prob)
+        else:
+            child_dict[person] = [gene_num, trait]
+            child_parent_dict[person] = [people[person]["mother"], people[person]["father"]]
 
+    # Calculate child probabilities:
+    for child in child_dict:
+        [gene_prob, trait_prob] = child_prob(child_dict[child], parent_dict[child_parent_dict[child][0]], parent_dict[child_parent_dict[child][1]], PROBS)
+        indv_probs.append(gene_prob*trait_prob)
+
+    # Calculate overall joint probability:
+    joint_prob = indv_probs[0]
+    for prob in indv_probs[1:]:
+        joint_prob *= prob
+
+    return joint_prob
+
+
+def parent_prob(gene_num, trait, PROBS):
+    
+    prob = [None,None]
+    prob[0] = PROBS["gene"][gene_num]
+    if trait:
+        prob[1] = PROBS["trait"][gene_num][True]
+    else:
+        prob[1] = PROBS["trait"][gene_num][False]
+    return prob
+
+
+def child_prob(child_status, mum_status, dad_status, PROBS):
+
+    # Model gene scenarios that could result in child having gene_num
+    gene_prob = 0
+    for mut_mum in [-1,0,1]:
+        for mut_dad in [-1,0,1]:
+            if (mum_status[0] + mut_mum <= 0 or mum_status[0] + mut_mum >= 3) or (dad_status[0] + mut_dad <= 0 or dad_status[0] + mut_dad >= 3):
+                continue
+            elif mum_status[0] + mut_mum + dad_status[0] + mut_dad == child_status[0]:
+                non_mutated = [mut_mum, mut_dad].count(0)
+                if non_mutated == 0:
+                    gene_prob += (1 - PROBS["mutation"])*(1 - PROBS["mutation"])
+                elif non_mutated == 1:
+                    gene_prob += (1 - PROBS["mutation"])*(PROBS["mutation"])
+                else:
+                    gene_prob += (PROBS["mutation"])*(PROBS["mutation"])
+    # Model trait stuff
+    if child_status[1]:
+        trait_prob = PROBS["trait"][child_status[0]][True]
+    else:
+        trait_prob = PROBS["trait"][child_status[0]][False]
+    return [gene_prob, trait_prob]
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
