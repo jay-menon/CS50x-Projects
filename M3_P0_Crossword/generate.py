@@ -147,6 +147,14 @@ class CrosswordCreator():
         puzzle without conflicting characters); return False otherwise.
         """
         # 2
+        words_implemented = set()
+        for var0 in assignment:
+            if assignment[var0] not in words_implemented:
+                words_implemented.add(assignment[var0])
+                for var1 in self.crossword.neighbours(var0):
+                    if self.revise(var0, var1):
+                        return False
+        return True
         raise NotImplementedError
 
     def order_domain_values(self, var, assignment):
