@@ -99,6 +99,8 @@ class CrosswordCreator():
         (Remove any values that are inconsistent with a variable's unary
          constraints; in this case, the length of the word.)
         """
+        # 5
+        # Iterates through list of variables, checking each variable's domain satisfies unary constraints
         raise NotImplementedError
 
     def revise(self, x, y):
@@ -110,6 +112,7 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
+        # 6
         raise NotImplementedError
 
     def ac3(self, arcs=None):
@@ -121,6 +124,9 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
+        # 7
+        # Iterates through list of variables, checking each variable's (x) neighbours (y)
+        # Use revise on every pair to make sure x is consistent with y for each pair
         raise NotImplementedError
 
     def assignment_complete(self, assignment):
@@ -128,6 +134,11 @@ class CrosswordCreator():
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
+        # 1
+        for var in assignment:
+            if not assignment[var]:
+                return False
+        return True
         raise NotImplementedError
 
     def consistent(self, assignment):
@@ -135,6 +146,7 @@ class CrosswordCreator():
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
+        # 2
         raise NotImplementedError
 
     def order_domain_values(self, var, assignment):
@@ -144,6 +156,9 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
+        # 3
+        # Orders domain of variable, putting value that constricts neighbours domain MOST, as first
+        # Used to implement Minimum Remaining Values (MRV) heuristic
         raise NotImplementedError
 
     def select_unassigned_variable(self, assignment):
@@ -154,6 +169,8 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
+        # 4
+        # Implement MRV and Degrees Heuristic to select next unassigned variable for backtrack algorithm
         raise NotImplementedError
 
     def backtrack(self, assignment):
@@ -165,6 +182,8 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
+        # 8
+        # Implements the actual BACKTRACKING aspect to return a completed assignment from a partial one
         raise NotImplementedError
 
 
