@@ -211,11 +211,13 @@ class CrosswordCreator():
         # Used to implement Minimum Remaining Values (MRV) heuristic
 
         # self.domains is currently a dict with each var as a key and EVERY word possible as def
-        words_list = self.domains[var]
-        neighbours_list = self.crossword.neighbors(var)
-        ruleout_dict = {word:0 for word in words_list}
-        for word in words_list:
-            for neighbour in neighbours_list:
+        words_set = self.domains[var]
+        all_neighbours_set = self.crossword.neighbors(var)
+        assigned_neighbours_set = set(assignment)
+        unassigned_neighbours_set = all_neighbours_set - assigned_neighbours_set
+        ruleout_dict = {word:0 for word in words_set}
+        for word in words_set:
+            for neighbour in unassigned_neighbours_set:
                 for neighbour_word in self.domains[neighbour]:
                     if not self.consistent({var:word, neighbour:neighbour_word}):
                         ruleout_dict[word] += 1
@@ -223,8 +225,6 @@ class CrosswordCreator():
         word_ruleout_list = [(word, ruleout_dict[word]) for word in ruleout_dict]
         word_ruleout_list.sort(key=lambda x: x[1])
         return [pair[0] for pair in word_ruleout_list]
-
-        
         raise NotImplementedError
 
     def select_unassigned_variable(self, assignment):
