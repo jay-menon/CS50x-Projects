@@ -183,11 +183,19 @@ class CrosswordCreator():
         # 2
         words_implemented = set()
         for var0 in assignment:
-            if assignment[var0] not in words_implemented:
+            # Ensures all diff words used
+            if assignment[var0] in words_implemented:
+                return False
+            else:
                 words_implemented.add(assignment[var0])
-                for var1 in self.crossword.neighbours(var0):
-                    if self.revise(var0, var1):
-                        return False
+            # Ensures assignment fits length constraint
+            if var0.length != len(assignment[var0]):
+                return False
+            # Ensures all neighbours are non-conflicting
+            for var1 in self.crossword.neighbours(var0):
+                (i, j) = self.crossword.overlaps[var0, var1]
+                if var0[i] != var1[j]:
+                    return False
         return True
         raise NotImplementedError
 
