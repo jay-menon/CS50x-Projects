@@ -195,8 +195,19 @@ class CrosswordCreator():
         # Used to implement Minimum Remaining Values (MRV) heuristic
 
         # self.domains is currently a dict with each var as a key and EVERY word possible as def
-        # We need to
         words_list = self.domains[var]
+        neighbours_list = self.crossword.neighbors(var)
+        ruleout_dict = {word:0 for word in words_list}
+        for word in words_list:
+            for neighbour in neighbours_list:
+                for neighbour_word in self.domains[neighbour]:
+                    if not self.consistent({var:word, neighbour:neighbour_word}):
+                        ruleout_dict[word] += 1
+        # ruleout_dict should now contain a dict of how many ruleouts each word causes
+        word_ruleout_list = [(word, ruleout_dict[word]) for word in ruleout_dict]
+        word_ruleout_list.sort(key=lambda x: x[1])
+        return [pair[0] for pair in word_ruleout_list]
+
         
         raise NotImplementedError
 
