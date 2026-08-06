@@ -104,7 +104,7 @@ class CrosswordCreator():
         for var in self.domains:
             for word in var.words:
                 if var.length != len(word):
-                    self.domains[var].pop(word)
+                    self.domains[var].remove(word)
         raise NotImplementedError
 
     def revise(self, x, y):
@@ -118,11 +118,19 @@ class CrosswordCreator():
         """
         # 6
         (i, j) = self.crossword.overlaps[x, y]
+        remove_set = set()
         for x_word in self.domains[x]:
-            if x[i] != y[j]:
-                self.domains[x].pop(x_word)
-                return True
-        return False
+            remove_word = True
+            for y_word in self.domains[y]:
+                if x_word[i] == y_word[j]:
+                    remove_word = False
+            if remove_word:
+                remove_set.add(x_word)
+        if remove_set:
+            self.domains[x] = self.domains[x] - remove_set
+            return True
+        else:
+            return False
         raise NotImplementedError
 
     def ac3(self, arcs=None):
