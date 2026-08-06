@@ -2,6 +2,28 @@ import sys
 
 from crossword import *
 
+class Node():
+    def __init__(self, state, parent, action):
+        self.state = state
+        self.parent = parent
+        self.action = action
+
+    def __hash__(self):
+        return hash((self.state, self.parent, self.action))
+
+    def __eq__(self, other):
+        return (
+            (self.state == other.state) and
+            (self.parent == other.parent) and
+            (self.action == other.action)
+        )
+
+class Frontier():
+    def __init__(self):
+        self.frontier = []
+
+    def add(self, node):
+        self.frontier.insert(0, node)
 
 class CrosswordCreator():
 
@@ -249,7 +271,6 @@ class CrosswordCreator():
                 if len(self.crossword.neighbors(var)) >= len(self.crossword.neighbors(curr_var)):
                     curr_var = var
         return curr_var
-
         raise NotImplementedError
 
     def backtrack(self, assignment):
@@ -263,6 +284,12 @@ class CrosswordCreator():
         """
         # 8
         # Implements the actual BACKTRACKING aspect to return a completed assignment from a partial one
+        curr_assignment = assignment
+        while not (self.assignment_complete(curr_assignment) and self.consistent(curr_assignment)):
+            self.enforce_node_consistency()
+            self.ac3()
+            curr_var = self.select_unassigned_variable(curr_assignment)
+            curr_val = self.order_domain_values(curr_var)[0]
         raise NotImplementedError
 
 
