@@ -117,6 +117,12 @@ class CrosswordCreator():
         False if no revision was made.
         """
         # 6
+        (i, j) = self.crossword.overlaps[x, y]
+        for x_word in self.domains[x]:
+            if x[i] != y[j]:
+                self.domains[x].pop(x_word)
+                return True
+        return False
         raise NotImplementedError
 
     def ac3(self, arcs=None):
