@@ -137,6 +137,22 @@ class CrosswordCreator():
         # 7
         # Iterates through list of variables, checking each variable's (x) neighbours (y)
         # Use revise on every pair to make sure x is consistent with y for each pair
+        # Must KEEP iterating until either at least one domain empty (infeasible solution) OR no further domain change
+        if arcs:
+            arcs_list = arcs
+        else:
+            arcs_list = list(set((((x,y) for x in self.crossword.variables if x != y) for y in self.crossword.variables)))
+        
+        revision_made = True
+        while revision_made:
+            revision_made = False
+            for arc in arcs_list:
+                (x, y) = arc
+                revision_made = self.revise(x, y)
+            for var in self.domains:
+                if self.domains[var] == set():
+                    return False
+        return True
         raise NotImplementedError
 
     def assignment_complete(self, assignment):
