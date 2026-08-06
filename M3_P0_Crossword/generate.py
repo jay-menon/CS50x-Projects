@@ -196,6 +196,8 @@ class CrosswordCreator():
 
         # self.domains is currently a dict with each var as a key and EVERY word possible as def
         # We need to
+        words_list = self.domains[var]
+        
         raise NotImplementedError
 
     def select_unassigned_variable(self, assignment):
@@ -208,6 +210,19 @@ class CrosswordCreator():
         """
         # 4
         # Implement MRV and Degrees Heuristic to select next unassigned variable for backtrack algorithm
+        unassigned_vars = self.crossword.variables - set(assignment)
+        curr_var = next(iter(unassigned_vars))
+        curr_dom_length = len(self.domains[curr_var])
+        for var in unassigned_vars:
+            if len(self.domains[var]) < curr_dom_length:
+                curr_var = var
+                curr_dom_length = len(self.domains[var])
+            elif len(self.domains[var]) == curr_dom_length:
+                # Check degrees
+                if len(self.crossword.neighbors(var)) >= len(self.crossword.neighbors(curr_var)):
+                    curr_var = var
+        return curr_var
+
         raise NotImplementedError
 
     def backtrack(self, assignment):
