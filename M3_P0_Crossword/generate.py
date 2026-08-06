@@ -101,6 +101,10 @@ class CrosswordCreator():
         """
         # 5
         # Iterates through list of variables, checking each variable's domain satisfies unary constraints
+        for var in self.domains:
+            for word in var.words:
+                if var.length != len(word):
+                    self.domains[var].pop(word)
         raise NotImplementedError
 
     def revise(self, x, y):
@@ -167,6 +171,9 @@ class CrosswordCreator():
         # 3
         # Orders domain of variable, putting value that constricts neighbours domain MOST, as first
         # Used to implement Minimum Remaining Values (MRV) heuristic
+
+        # self.domains is currently a dict with each var as a key and EVERY word possible as def
+        # We need to
         raise NotImplementedError
 
     def select_unassigned_variable(self, assignment):
