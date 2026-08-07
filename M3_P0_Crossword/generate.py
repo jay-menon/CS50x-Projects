@@ -3,11 +3,12 @@ import sys
 from crossword import *
 
 class Layer():
-    def __init__(self, assignment, var, var_list, var_idx, num):
+    def __init__(self, assignment, var, var_list, var_idx, domains, num):
         self.assignment = assignment
         self.var = var
         self.var_list = var_list
         self.var_idx = var_idx
+        self.domains = domains
         self.num = num
 
     def __str__(self):
@@ -282,10 +283,13 @@ class CrosswordCreator():
         If no assignment is possible, return None.
         """
         force_bt = False
-        layer_list = [Layer(assignment, None, None, 0, 0)]
+        layer_list = [Layer(assignment, None, None, 0, copy_domains(self.domains), 0)]
 
         while True:
             curr_layer = layer_list[0]
+            self.domains = copy_domains(curr_layer.domains)
+            self.ac3()
+        
             # Checks if assignment has all var assigned to actual words AND, words all fit constraints
             if not self.consistent(curr_layer.assignment) or force_bt is True:
                 force_bt = False
@@ -294,6 +298,7 @@ class CrosswordCreator():
                 # If backtrack ever results in empty layer_list, problem is infeasible
                 if layer_list == []:
                     return None
+            
             # If assignment is consistent, check if it is COMPLETE
             elif not self.assignment_complete(curr_layer.assignment):
                 # If not complete, find next variable to fix and fix it for the next layer
@@ -307,7 +312,7 @@ class CrosswordCreator():
                 new_assignment[curr_var] = curr_var_list[0]
                 new_num = curr_layer.num + 1
 
-                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, new_num)
+                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, copy_domains(self.domains), new_num)
                 layer_list.insert(0, new_layer)
             else:
                 # If assignment is both consistent AND complete, return that assignment
@@ -337,7 +342,6 @@ def main():
         if output:
             creator.save(assignment, output)
 
-
 def layer_list_incrementor(layer_list):
 
     new_layer_list = []
@@ -349,13 +353,19 @@ def layer_list_incrementor(layer_list):
         if layer.var_idx + 1 == len(layer.var_list):
             continue
         elif layer.var_idx + 1 < len(layer.var_list) and inc_same_layer is False:
-            new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
+            new_assignment = layer.assignment
+            new_assignment[layer.var] = layer.var_list[layer.var_idx + 1]
+            new_layer_list.append(Layer(new_assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.domains, layer.num))
             inc_same_layer = True
             continue
         
         if inc_same_layer is True:
             new_layer_list.append(layer)
     return new_layer_list
+
+def copy_domains(domains):
+    domains_copy = {var:set(domains[var]) for var in dict(domains)}
+    return domains_copy
 
 
 # TROUBLESHOOT:
