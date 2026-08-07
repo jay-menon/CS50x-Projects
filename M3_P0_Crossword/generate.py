@@ -108,11 +108,12 @@ class CrosswordCreator():
         """
         # 5
         # Iterates through list of variables, checking each variable's domain satisfies unary constraints
+        new_dict = {var:set(self.domains[var]) for var in dict(self.domains)}
         for var in self.domains:
-            for word in var.words:
+            for word in self.domains[var]:
                 if var.length != len(word):
-                    self.domains[var].remove(word)
-        raise NotImplementedError
+                    new_dict[var].remove(word)
+        self.domains = new_dict
 
     def revise(self, x, y):
         """
@@ -124,21 +125,28 @@ class CrosswordCreator():
         False if no revision was made.
         """
         # 6
-        (i, j) = self.crossword.overlaps[x, y]
-        remove_set = set()
-        for x_word in self.domains[x]:
-            remove_word = True
-            for y_word in self.domains[y]:
-                if x_word[i] == y_word[j]:
-                    remove_word = False
-            if remove_word:
-                remove_set.add(x_word)
-        if remove_set:
-            self.domains[x] = self.domains[x] - remove_set
-            return True
+        # Check if they are even neighbours:
+        if y in self.crossword.neighbors(x):
+            # If they are, add any words that conflict with x to remove_set
+            (i, j) = self.crossword.overlaps[x, y]
+            remove_set = set()
+            for x_word in self.domains[x]:
+                remove_word = True
+                for y_word in self.domains[y]:
+                    if x_word[i] == y_word[j]:
+                        remove_word = False
+                if remove_word:
+                    remove_set.add(x_word)
+            # If there are words in remove_set, remove them and return True
+            if remove_set:
+                self.domains[x] = self.domains[x] - remove_set
+                return True
+            else:
+                # If no words need to be removed from y domain, return False
+                return False
         else:
+            # If not neighbours, no change will be made so return False
             return False
-        raise NotImplementedError
 
     def ac3(self, arcs=None):
         """
@@ -156,8 +164,7 @@ class CrosswordCreator():
         if arcs:
             arcs_list = arcs
         else:
-            arcs_list = list(set((((x,y) for x in self.crossword.variables if x != y) for y in self.crossword.variables)))
-        
+            arcs_list = list(set((x,y) for x in self.crossword.variables for y in self.crossword.variables if x != y))
         revision_made = True
         while revision_made:
             revision_made = False
@@ -168,7 +175,6 @@ class CrosswordCreator():
                 if self.domains[var] == set():
                     return False
         return True
-        raise NotImplementedError
 
     def assignment_complete(self, assignment):
         """
@@ -180,7 +186,6 @@ class CrosswordCreator():
             if not assignment[var]:
                 return False
         return True
-        raise NotImplementedError
 
     def consistent(self, assignment):
         """
@@ -199,12 +204,12 @@ class CrosswordCreator():
             if var0.length != len(assignment[var0]):
                 return False
             # Ensures all neighbours are non-conflicting
-            for var1 in self.crossword.neighbours(var0):
+            for var1 in self.crossword.neighbors(var0):
                 (i, j) = self.crossword.overlaps[var0, var1]
-                if var0[i] != var1[j]:
-                    return False
+                if var1 in assignment:
+                    if assignment[var0][i] != assignment[var1][j]:
+                        return False
         return True
-        raise NotImplementedError
 
     def order_domain_values(self, var, assignment):
         """
@@ -232,7 +237,6 @@ class CrosswordCreator():
         word_ruleout_list = [(word, ruleout_dict[word]) for word in ruleout_dict]
         word_ruleout_list.sort(key=lambda x: x[1])
         return [pair[0] for pair in word_ruleout_list]
-        raise NotImplementedError
 
     def select_unassigned_variable(self, assignment):
         """
@@ -256,7 +260,6 @@ class CrosswordCreator():
                 if len(self.crossword.neighbors(var)) >= len(self.crossword.neighbors(curr_var)):
                     curr_var = var
         return curr_var
-        raise NotImplementedError
 
     def layer_list_incrementor(layer_list):
         # Layer(assignment,var,var_list,var_idx)
@@ -276,7 +279,6 @@ class CrosswordCreator():
                 new_layer_list.append(layer)
         return new_layer_list
 
-
     def backtrack(self, assignment):
         """
         Using Backtracking Search, take as input a partial assignment for the
@@ -292,7 +294,7 @@ class CrosswordCreator():
         complete = False
 
         curr_var = self.select_unassigned_variable(assignment)
-        curr_var_list = self.order_domain_values(curr_var)
+        curr_var_list = self.order_domain_values(curr_var, assignment)
         layer_list = [Layer(assignment, curr_var, curr_var_list, 0)]
         curr_assignment = assignment
 
@@ -312,14 +314,12 @@ class CrosswordCreator():
                 new_assignment = dict(curr_layer.assignment)
                 new_assignment[curr_layer.var] = curr_layer.var_list[curr_layer.var_idx]
                 next_var = self.select_unassigned_variable(new_assignment)
-                next_var_list = self.order_domain_values(next_var)
+                next_var_list = self.order_domain_values(next_var, new_assignment)
                 new_layer = Layer(new_assignment, next_var, next_var_list, 0)
                 layer_list.insert(new_layer, 0)
                 raise NotImplementedError
             else:
                 return curr_layer.assignment
-
-        raise NotImplementedError
 
 
 def main():
