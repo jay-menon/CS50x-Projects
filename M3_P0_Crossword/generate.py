@@ -351,7 +351,7 @@ def main():
         if output:
             creator.save(assignment, output)
 
-
+# Moved this ex-method outside class to become global function
 def layer_list_incrementor(layer_list):
     # Works for when we overflow to infeasibility in theory
     # 
