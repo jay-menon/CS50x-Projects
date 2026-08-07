@@ -3,12 +3,15 @@ import sys
 from crossword import *
 
 class Layer():
-    def __init__(self, assignment, var, var_list, var_idx):
+    def __init__(self, assignment, var, var_list, var_idx, num):
         self.assignment = assignment
         self.var = var
         self.var_list = var_list
         self.var_idx = var_idx
+        self.num = num
 
+    def __str__(self):
+        return f"Layer Num: {self.num}, Var_idx: {self.var_idx}"
 
 class CrosswordCreator():
 
@@ -269,23 +272,24 @@ class CrosswordCreator():
                     curr_var = var
         return curr_var
 
-    def layer_list_incrementor(layer_list):
-        # Layer(assignment,var,var_list,var_idx)
-        new_layer_list = []
-        inc_layer = False
-        for layer in layer_list:
-            if layer.var_idx + 1 == len(layer.var_list):
-                continue
-            elif layer.var_idx + 1 < len(layer.var_list) and inc_layer is False:
-                new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1))
-                inc_layer = True
-                continue
-            else:
-                print("ERROR, SOMETHING WENT CRAZY")
+    # def layer_list_incrementor(layer_list):
+    #     # Works for when we overflow to infeasibility in theory
+    #     # 
+    #     new_layer_list = []
+    #     inc_same_layer = False
+    #     overflow = False
+    #     for layer in layer_list:
+    #         if layer.var_idx + 1 == len(layer.var_list):
+    #             overflow = True
+    #             continue
+    #         elif layer.var_idx + 1 < len(layer.var_list) and inc_same_layer is False:
+    #             new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
+    #             inc_same_layer = True
+    #             continue
             
-            if inc_layer is True:
-                new_layer_list.append(layer)
-        return new_layer_list
+    #         if inc_same_layer is True:
+    #             new_layer_list.append(layer)
+    #     return new_layer_list
 
     def backtrack(self, assignment):
         """
@@ -296,39 +300,32 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        # 8
-        # Implements the actual BACKTRACKING aspect to return a completed assignment from a partial one
         consistent = False
         complete = False
 
-        curr_var = self.select_unassigned_variable(assignment)
-        curr_var_list = self.order_domain_values(curr_var, assignment)
-        layer_list = [Layer(assignment, curr_var, curr_var_list, 0)]
-        curr_assignment = assignment
+        layer_list = [Layer(assignment, None, None, 0, 0)]
 
-        failed_assignments = set()
         while not (consistent and complete):
-            curr_layer = layer_list[-1]
+            curr_layer = layer_list[0]
             
             if not self.consistent(curr_layer.assignment):
-                failed_assignments.add(curr_assignment)
-                layer_list = self.layer_list_incrementor(layer_list)
+                for layer in layer_list:
+                    print(layer)
+                layer_list = layer_list_incrementor(layer_list)
                 if layer_list == []:
                     return None
-                raise NotImplementedError
             
             elif not self.assignment_complete(curr_layer.assignment):
-
+                curr_var = self.select_unassigned_variable(curr_layer.assignment)
+                curr_var_list = self.order_domain_values(curr_var, curr_layer.assignment)
                 new_assignment = dict(curr_layer.assignment)
-                new_assignment[curr_layer.var] = curr_layer.var_list[curr_layer.var_idx]
-                next_var = self.select_unassigned_variable(new_assignment)
-                next_var_list = self.order_domain_values(next_var, new_assignment)
-                new_layer = Layer(new_assignment, next_var, next_var_list, 0)
-                layer_list.insert(new_layer, 0)
-                raise NotImplementedError
+                new_assignment[curr_var] = curr_var_list[0]
+                new_num = curr_layer.num + 1
+
+                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, new_num)
+                layer_list.insert(0, new_layer)
             else:
                 return curr_layer.assignment
-
 
 def main():
 
@@ -355,5 +352,38 @@ def main():
             creator.save(assignment, output)
 
 
+def layer_list_incrementor(layer_list):
+    # Works for when we overflow to infeasibility in theory
+    # 
+    new_layer_list = []
+    inc_same_layer = False
+    overflow = False
+    for layer in layer_list:
+        if layer.var_idx + 1 == len(layer.var_list):
+            overflow = True
+            continue
+        elif layer.var_idx + 1 < len(layer.var_list) and inc_same_layer is False:
+            new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
+            inc_same_layer = True
+            continue
+        
+        if inc_same_layer is True:
+            new_layer_list.append(layer)
+    return new_layer_list
+
+# words_list = ["one", "two", "three"]
+# Var0 = Variable(0, 0, "down", 3)
+# Var1 = Variable(0, 1, "across", 2)
+# assignment = {Var0: "zero"}
+# test_layer_0 = Layer(assignment, Var0, words_list, 1, 0)
+# test_layer_1 = Layer(assignment, Var1, words_list, 1, 1)
+# layer_list = [test_layer_1, test_layer_0]
+# result = layer_list_incrementor(layer_list)
+# print(result[1])
+
 if __name__ == "__main__":
     main()
+
+# TROUBLESHOOT:
+# LAYER INCREMENETOR WORKING AS INTENDED
+
