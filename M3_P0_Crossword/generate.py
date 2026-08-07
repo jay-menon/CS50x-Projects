@@ -11,7 +11,7 @@ class Layer():
         self.num = num
 
     def __str__(self):
-        return f"Layer Num: {self.num}, Var_idx: {self.var_idx}"
+        return f"Layer Num: {self.num}, Var_idx: {self.var_idx} || {self.assignment}"
 
 class CrosswordCreator():
 
@@ -206,8 +206,8 @@ class CrosswordCreator():
         # 2
         words_implemented = set()
         for var0 in assignment:
-            # Ensures all diff words used
-            if assignment[var0] in words_implemented:
+            # Ensures all diff words used and that it is an actual word that has been assigned
+            if assignment[var0] in words_implemented or not assignment[var0]:
                 return False
             else:
                 words_implemented.add(assignment[var0])
@@ -300,24 +300,28 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        consistent = False
-        complete = False
-
+        force_bt = False
         layer_list = [Layer(assignment, None, None, 0, 0)]
 
-        while not (consistent and complete):
+        while True:
             curr_layer = layer_list[0]
-            
-            if not self.consistent(curr_layer.assignment):
-                for layer in layer_list:
-                    print(layer)
+            # Checks if assignment has all var assigned to actual words AND, words all fit constraints
+            if not self.consistent(curr_layer.assignment) or force_bt is True:
+                force_bt = False
+                # If not consistent, we backtrack
                 layer_list = layer_list_incrementor(layer_list)
+                # If backtrack ever results in empty layer_list, problem is infeasible
                 if layer_list == []:
                     return None
-            
+            # If assignment is consistent, check if it is COMPLETE
             elif not self.assignment_complete(curr_layer.assignment):
+                # If not complete, find next variable to fix and fix it for the next layer
                 curr_var = self.select_unassigned_variable(curr_layer.assignment)
                 curr_var_list = self.order_domain_values(curr_var, curr_layer.assignment)
+                # If var_list is empty, force a backtrack
+                if curr_var_list == []:
+                    force_bt = True
+                    continue
                 new_assignment = dict(curr_layer.assignment)
                 new_assignment[curr_var] = curr_var_list[0]
                 new_num = curr_layer.num + 1
@@ -325,6 +329,7 @@ class CrosswordCreator():
                 new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, new_num)
                 layer_list.insert(0, new_layer)
             else:
+                # If assignment is both consistent AND complete, return that assignment
                 return curr_layer.assignment
 
 def main():
@@ -354,13 +359,13 @@ def main():
 # Moved this ex-method outside class to become global function
 def layer_list_incrementor(layer_list):
     # Works for when we overflow to infeasibility in theory
-    # 
     new_layer_list = []
     inc_same_layer = False
-    overflow = False
     for layer in layer_list:
+
+        if layer.var_list is None or layer.var_list == []:
+            continue
         if layer.var_idx + 1 == len(layer.var_list):
-            overflow = True
             continue
         elif layer.var_idx + 1 < len(layer.var_list) and inc_same_layer is False:
             new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
