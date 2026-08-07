@@ -2,28 +2,13 @@ import sys
 
 from crossword import *
 
-class Node():
-    def __init__(self, state, parent, action):
-        self.state = state
-        self.parent = parent
-        self.action = action
+class Layer():
+    def __init__(self, assignment, var, var_list, var_idx):
+        self.assignment = assignment
+        self.var = var
+        self.var_list = var_list
+        self.var_idx = var_idx
 
-    def __hash__(self):
-        return hash((self.state, self.parent, self.action))
-
-    def __eq__(self, other):
-        return (
-            (self.state == other.state) and
-            (self.parent == other.parent) and
-            (self.action == other.action)
-        )
-
-class Frontier():
-    def __init__(self):
-        self.frontier = []
-
-    def add(self, node):
-        self.frontier.insert(0, node)
 
 class CrosswordCreator():
 
@@ -273,6 +258,25 @@ class CrosswordCreator():
         return curr_var
         raise NotImplementedError
 
+    def layer_list_incrementor(layer_list):
+        # Layer(assignment,var,var_list,var_idx)
+        new_layer_list = []
+        inc_layer = False
+        for layer in layer_list:
+            if layer.var_idx + 1 == len(layer.var_list):
+                continue
+            elif layer.var_idx + 1 < len(layer.var_list) and inc_layer is False:
+                new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1))
+                inc_layer = True
+                continue
+            else:
+                print("ERROR, SOMETHING WENT CRAZY")
+            
+            if inc_layer is True:
+                new_layer_list.append(layer)
+        return new_layer_list
+
+
     def backtrack(self, assignment):
         """
         Using Backtracking Search, take as input a partial assignment for the
@@ -284,12 +288,37 @@ class CrosswordCreator():
         """
         # 8
         # Implements the actual BACKTRACKING aspect to return a completed assignment from a partial one
+        consistent = False
+        complete = False
+
+        curr_var = self.select_unassigned_variable(assignment)
+        curr_var_list = self.order_domain_values(curr_var)
+        layer_list = [Layer(assignment, curr_var, curr_var_list, 0)]
         curr_assignment = assignment
-        while not (self.assignment_complete(curr_assignment) and self.consistent(curr_assignment)):
-            self.enforce_node_consistency()
-            self.ac3()
-            curr_var = self.select_unassigned_variable(curr_assignment)
-            curr_val = self.order_domain_values(curr_var)[0]
+
+        failed_assignments = set()
+        while not (consistent and complete):
+            curr_layer = layer_list[-1]
+            
+            if not self.consistent(curr_layer.assignment):
+                failed_assignments.add(curr_assignment)
+                layer_list = self.layer_list_incrementor(layer_list)
+                if layer_list == []:
+                    return None
+                raise NotImplementedError
+            
+            elif not self.assignment_complete(curr_layer.assignment):
+
+                new_assignment = dict(curr_layer.assignment)
+                new_assignment[curr_layer.var] = curr_layer.var_list[curr_layer.var_idx]
+                next_var = self.select_unassigned_variable(new_assignment)
+                next_var_list = self.order_domain_values(next_var)
+                new_layer = Layer(new_assignment, next_var, next_var_list, 0)
+                layer_list.insert(new_layer, 0)
+                raise NotImplementedError
+            else:
+                return curr_layer.assignment
+
         raise NotImplementedError
 
 
