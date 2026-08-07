@@ -272,25 +272,6 @@ class CrosswordCreator():
                     curr_var = var
         return curr_var
 
-    # def layer_list_incrementor(layer_list):
-    #     # Works for when we overflow to infeasibility in theory
-    #     # 
-    #     new_layer_list = []
-    #     inc_same_layer = False
-    #     overflow = False
-    #     for layer in layer_list:
-    #         if layer.var_idx + 1 == len(layer.var_list):
-    #             overflow = True
-    #             continue
-    #         elif layer.var_idx + 1 < len(layer.var_list) and inc_same_layer is False:
-    #             new_layer_list.append(Layer(layer.assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
-    #             inc_same_layer = True
-    #             continue
-            
-    #         if inc_same_layer is True:
-    #             new_layer_list.append(layer)
-    #     return new_layer_list
-
     def backtrack(self, assignment):
         """
         Using Backtracking Search, take as input a partial assignment for the
@@ -356,9 +337,9 @@ def main():
         if output:
             creator.save(assignment, output)
 
-# Moved this ex-method outside class to become global function
+
 def layer_list_incrementor(layer_list):
-    # Works for when we overflow to infeasibility in theory
+
     new_layer_list = []
     inc_same_layer = False
     for layer in layer_list:
@@ -376,6 +357,10 @@ def layer_list_incrementor(layer_list):
             new_layer_list.append(layer)
     return new_layer_list
 
+
+# TROUBLESHOOT:
+# LAYER INCREMENETOR WORKING AS INTENDED
+
 # words_list = ["one", "two", "three"]
 # Var0 = Variable(0, 0, "down", 3)
 # Var1 = Variable(0, 1, "across", 2)
@@ -389,6 +374,4 @@ def layer_list_incrementor(layer_list):
 if __name__ == "__main__":
     main()
 
-# TROUBLESHOOT:
-# LAYER INCREMENETOR WORKING AS INTENDED
 
