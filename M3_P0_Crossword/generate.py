@@ -288,6 +288,7 @@ class CrosswordCreator():
         while True:
             curr_layer = layer_list[0]
             self.domains = copy_domains(curr_layer.domains)
+            #domain_constrictor(self.domains, curr_layer.assignment)
             self.ac3()
         
             # Checks if assignment has all var assigned to actual words AND, words all fit constraints
@@ -366,6 +367,10 @@ def layer_list_incrementor(layer_list):
 def copy_domains(domains):
     domains_copy = {var:set(domains[var]) for var in dict(domains)}
     return domains_copy
+
+def domain_constrictor(domain, assignment):
+    for var in assignment:
+        domain[var] = set(assignment[var])
 
 
 # TROUBLESHOOT:
