@@ -405,6 +405,15 @@ def domains_deepcopy(domains):
     domains_copy = dict(domains)
     return {val: set(domains_copy[val]) for val in domains_copy}
 
+def domain_constrictor(domains, assignment):
+    '''
+    Updates domains dictionary, constricting the domain of variables from assignment
+    to their respective value in the assignment dictionary.
+    '''
+    for var in assignment:
+        domains[var] = set(assignment[var])
+
+
 # MAIN FUNCTION
 
 def main():
