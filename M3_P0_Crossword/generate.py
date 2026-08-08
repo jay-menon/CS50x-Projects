@@ -3,12 +3,21 @@ import sys
 from crossword import *
 
 class Layer():
-    def __init__(self, assignment, var, var_list, var_idx, domains, num):
+
+    def __init__(self, assignment, var, var_list, var_idx, num):
+        """
+        Creates a new 'Layer' which represents the fixing of a variable to value in its domain to create
+        an updated variable-value assignment.
+        """
+        # self.assignment stores the updated variable-value assignment
         self.assignment = assignment
+        # self.var stores the variable that has been fixed
         self.var = var
+        # self.var_list stores the potential values that the variable could take in list form
         self.var_list = var_list
+        # self.var_idx stores the index of the value in self.var_list that the variable has been fixed to
         self.var_idx = var_idx
-        self.domains = domains
+        # self.num stores the layer's number: i.e. the nth layer is on top of n-1 layers and so n-1 variables were fixed before this one
         self.num = num
 
     def __str__(self):
@@ -110,13 +119,14 @@ class CrosswordCreator():
         (Remove any values that are inconsistent with a variable's unary
          constraints; in this case, the length of the word.)
         """
-        # 5
-        # Iterates through list of variables, checking each variable's domain satisfies unary constraints
+        # Iterates through list of variables, checking each variable's domain satisfies unary constraints (word length)
         new_dict = {var:set(self.domains[var]) for var in dict(self.domains)}
         for var in self.domains:
             for word in self.domains[var]:
                 if var.length != len(word):
                     new_dict[var].remove(word)
+        
+        # Updates self.domains
         self.domains = new_dict
 
     def revise(self, x, y):
@@ -128,9 +138,9 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        # 6
-        # Check if they are even neighbours:
+        # Check if x and y are neighbours
         if y in self.crossword.neighbors(x):
+            
             # If they are, add any words that conflict with x to remove_set
             (i, j) = self.crossword.overlaps[x, y]
             remove_set = set()
@@ -141,7 +151,8 @@ class CrosswordCreator():
                         remove_word = False
                 if remove_word:
                     remove_set.add(x_word)
-            # If there are words in remove_set, remove them and return True
+
+            # If there are words in remove_set, remove them from x's domain and return True
             if remove_set:
                 self.domains[x] = self.domains[x] - remove_set
                 return True
@@ -149,7 +160,7 @@ class CrosswordCreator():
                 # If no words need to be removed from y domain, return False
                 return False
         else:
-            # If not neighbours, no change will be made so return False
+            # If x and y not neighbours, no change will be made so return False
             return False
 
     def ac3(self, arcs=None):
@@ -161,28 +172,30 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
-        # 7
-        # Iterates through list of variables, checking each variable's (x) neighbours (y)
-        # Use revise on every pair to make sure x is consistent with y for each pair
-        # Must KEEP iterating until either at least one domain empty (infeasible solution) OR no further domain change
-        if arcs or arcs == []:
+        # If arcs input has been specified, consider the input only, but otherwise, consider all arcs
+        if arcs is not None:
             arcs_list = arcs
         else:
-            arcs_list = list(set((x,y) for x in self.crossword.variables for y in self.crossword.variables if x != y))
+            arcs_list = set((x,y) for x in self.crossword.variables for y in self.crossword.variables if x != y)
         
+        # Loop iterates until problem becomes infeasible or no further domain change is observed
         revision_made = True
         while revision_made:
             revision_made = False
 
+            # Evaluates each arc, noting if one of the variable's domains was constricted
             for arc in arcs_list:
                 (x, y) = arc
                 revision = self.revise(x, y)
                 if revision:
                     revision_made = True
             
+            # Automatically returns False if any domain is left empty by enforcing arc consistency
             for var in self.domains:
                 if self.domains[var] == set():
                     return False
+    
+        # Returns True if no further domain constriction can occur and every domain is non-empty
         return True
 
     def assignment_complete(self, assignment):
@@ -193,10 +206,12 @@ class CrosswordCreator():
         # Check if assignment includes all variables
         if self.crossword.variables - set(assignment) != set():
             return False
+        
         # If it does, make sure all variables have actual values assigned to them
         for var in assignment:
             if not assignment[var]:
                 return False
+
         return True
 
     def consistent(self, assignment):
@@ -204,23 +219,27 @@ class CrosswordCreator():
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
-        # 2
+        # Iterates through each variable in assignment, checking if their assigned value violates any constraints
         words_implemented = set()
         for var0 in assignment:
+    
             # Ensures all diff words used and that it is an actual word that has been assigned
             if assignment[var0] in words_implemented or not assignment[var0]:
                 return False
             else:
                 words_implemented.add(assignment[var0])
+
             # Ensures assignment fits length constraint
             if var0.length != len(assignment[var0]):
                 return False
+
             # Ensures all neighbours are non-conflicting
             for var1 in self.crossword.neighbors(var0):
                 (i, j) = self.crossword.overlaps[var0, var1]
                 if var1 in assignment:
                     if assignment[var0][i] != assignment[var1][j]:
                         return False
+
         return True
 
     def order_domain_values(self, var, assignment):
@@ -230,22 +249,24 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-        # 3
-        # Orders domain of variable, putting value that constricts neighbours domain MOST, as first
-        # Used to implement Minimum Remaining Values (MRV) heuristic
-
-        # self.domains is currently a dict with each var as a key and EVERY word possible as def
-        words_set = self.domains[var]
+        # Construct set of all neighbouring variables that are unassigned in the input assignment
         all_neighbours_set = self.crossword.neighbors(var)
         assigned_neighbours_set = set(assignment)
         unassigned_neighbours_set = all_neighbours_set - assigned_neighbours_set
+
+        # Initialise ruleout_dict to track how many values each word rules out in the unassigned neighbours' domains
+        words_set = self.domains[var]
         ruleout_dict = {word:0 for word in words_set}
+
+        # Iterate through each word in the input variable's domain, noting how many neighbouring values it rules out
         for word in words_set:
             for neighbour in unassigned_neighbours_set:
                 for neighbour_word in self.domains[neighbour]:
                     if not self.consistent({var:word, neighbour:neighbour_word}):
                         ruleout_dict[word] += 1
+        
         # ruleout_dict should now contain a dict of how many ruleouts each word causes
+        # Return the input variable's domain in list form, ordered from least constraining to most
         word_ruleout_list = [(word, ruleout_dict[word]) for word in ruleout_dict]
         word_ruleout_list.sort(key=lambda x: x[1])
         return [pair[0] for pair in word_ruleout_list]
@@ -258,20 +279,28 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        # 4
-        # Implement MRV and Degrees Heuristic to select next unassigned variable for backtrack algorithm
+        # Construct set of all the variables left unassigned in the input assignment
         unassigned_vars = self.crossword.variables - set(assignment)
-        curr_var = next(iter(unassigned_vars))
-        curr_dom_length = len(self.domains[curr_var])
+
+        # Select a random initial variable from the set and note the size of its domain
+        best_var = next(iter(unassigned_vars))
+        curr_dom_length = len(self.domains[best_var])
+
+        # Iterates through unassigned_vars, updating best_var if a more favourable variable found
         for var in unassigned_vars:
+            
+            # If the variable has a smaller domain than the incumbent, update best_variable
             if len(self.domains[var]) < curr_dom_length:
-                curr_var = var
+                best_var = var
                 curr_dom_length = len(self.domains[var])
+
+            # If the domains are the same size, check the degrees of each variable
             elif len(self.domains[var]) == curr_dom_length:
-                # Check degrees
-                if len(self.crossword.neighbors(var)) >= len(self.crossword.neighbors(curr_var)):
-                    curr_var = var
-        return curr_var
+                # Whichever variable has more neighbours is the incumbent (if a draw, choose either)
+                if len(self.crossword.neighbors(var)) >= len(self.crossword.neighbors(best_var)):
+                    best_var = var
+
+        return best_var
 
     def backtrack(self, assignment):
         """
@@ -282,42 +311,89 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        force_bt = False
-        layer_list = [Layer(assignment, None, None, 0, copy_domains(self.domains), 0)]
 
-        while True:
+        # Initialise the search
+        force_bt = False
+        consistent_complete = False
+        layer_list = [Layer(assignment, None, None, 0, 0)]
+
+        # Iterates until either a consistent and complete assignment is found OR problem is deemed infeasible
+        while not consistent_complete:
+            
+            # Select uppermost layer in layer_list and enforce arc consistency based on its assignment
             curr_layer = layer_list[0]
-            self.domains = copy_domains(curr_layer.domains)
-            #domain_constrictor(self.domains, curr_layer.assignment)
             self.ac3()
         
-            # Checks if assignment has all var assigned to actual words AND, words all fit constraints
+            # Checks if assignment has all variables assigned to actual words and words fit constraints
             if not self.consistent(curr_layer.assignment) or force_bt is True:
                 force_bt = False
-                # If not consistent, we backtrack
+                # If assignment is inconsistent, layer_list is backtracked by one stage
                 layer_list = layer_list_incrementor(layer_list)
-                # If backtrack ever results in empty layer_list, problem is infeasible
+                # If backtrack ever results in empty layer_list, problem is infeasible and function returns None
                 if layer_list == []:
                     return None
             
-            # If assignment is consistent, check if it is COMPLETE
+            # If assignment is consistent, check if it is complete
             elif not self.assignment_complete(curr_layer.assignment):
+                
                 # If not complete, find next variable to fix and fix it for the next layer
                 curr_var = self.select_unassigned_variable(curr_layer.assignment)
                 curr_var_list = self.order_domain_values(curr_var, curr_layer.assignment)
+
                 # If var_list is empty, force a backtrack
                 if curr_var_list == []:
                     force_bt = True
                     continue
+                
+                # If var_list not empty, define the next layer and add to layer_list
                 new_assignment = dict(curr_layer.assignment)
                 new_assignment[curr_var] = curr_var_list[0]
-                new_num = curr_layer.num + 1
-
-                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, copy_domains(self.domains), new_num)
+                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, curr_layer.num + 1)
                 layer_list.insert(0, new_layer)
+
+            # Assignment reaches here only if it is both consistent AND complete, thus breaking the loop
             else:
-                # If assignment is both consistent AND complete, return that assignment
-                return curr_layer.assignment
+                consistent_complete = True
+
+        return curr_layer.assignment
+
+
+# HELPER FUNCTIONS:
+
+def layer_list_incrementor(layer_list):
+    '''
+    Returns a layer list that has been backtracked by one stage relative to the input layer list.
+    If impossible to backtrack any further, returns [].
+    '''
+    # Initialise new_layer_list
+    new_layer_list = []
+    backtrack_layer = False
+    for layer in layer_list:
+
+        # If the current layer's variable domain is empty, consider the next layer instead
+        if not layer.var_list:
+            continue
+
+        # If the current layer's variable domain has been fully explored, consider the next layer instead
+        if layer.var_idx + 1 == len(layer.var_list):
+            continue
+
+        # If the current layer is the first layer who's variable domain hasn't been fully explored, that is the backtrack layer
+        elif layer.var_idx + 1 < len(layer.var_list) and backtrack_layer is False:
+            # Update the layer's assignment to include the new domain value and add the new layer to new_layer_list
+            backtrack_layer = True
+            new_assignment = layer.assignment
+            new_assignment[layer.var] = layer.var_list[layer.var_idx + 1]
+            new_layer_list.append(Layer(new_assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
+            continue     
+
+        # Add all layers after the backtrack layer to new_layer_list, unaltered
+        if backtrack_layer is True:
+            new_layer_list.append(layer)
+
+    return new_layer_list
+
+# MAIN FUNCTION
 
 def main():
 
@@ -343,50 +419,5 @@ def main():
         if output:
             creator.save(assignment, output)
 
-def layer_list_incrementor(layer_list):
-
-    new_layer_list = []
-    inc_same_layer = False
-    for layer in layer_list:
-
-        if layer.var_list is None or layer.var_list == []:
-            continue
-        if layer.var_idx + 1 == len(layer.var_list):
-            continue
-        elif layer.var_idx + 1 < len(layer.var_list) and inc_same_layer is False:
-            new_assignment = layer.assignment
-            new_assignment[layer.var] = layer.var_list[layer.var_idx + 1]
-            new_layer_list.append(Layer(new_assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.domains, layer.num))
-            inc_same_layer = True
-            continue
-        
-        if inc_same_layer is True:
-            new_layer_list.append(layer)
-    return new_layer_list
-
-def copy_domains(domains):
-    domains_copy = {var:set(domains[var]) for var in dict(domains)}
-    return domains_copy
-
-def domain_constrictor(domain, assignment):
-    for var in assignment:
-        domain[var] = set(assignment[var])
-
-
-# TROUBLESHOOT:
-# LAYER INCREMENETOR WORKING AS INTENDED
-
-# words_list = ["one", "two", "three"]
-# Var0 = Variable(0, 0, "down", 3)
-# Var1 = Variable(0, 1, "across", 2)
-# assignment = {Var0: "zero"}
-# test_layer_0 = Layer(assignment, Var0, words_list, 1, 0)
-# test_layer_1 = Layer(assignment, Var1, words_list, 1, 1)
-# layer_list = [test_layer_1, test_layer_0]
-# result = layer_list_incrementor(layer_list)
-# print(result[1])
-
 if __name__ == "__main__":
     main()
-
-
