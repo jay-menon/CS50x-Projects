@@ -4,7 +4,7 @@ from crossword import *
 
 class Layer():
 
-    def __init__(self, assignment, var, var_list, var_idx, num):
+    def __init__(self, assignment, var, var_list, var_idx, num, domains):
         """
         Creates a new 'Layer' which represents the fixing of a variable to value in its domain to create
         an updated variable-value assignment.
@@ -19,6 +19,8 @@ class Layer():
         self.var_idx = var_idx
         # self.num stores the layer's number: i.e. the nth layer is on top of n-1 layers and so n-1 variables were fixed before this one
         self.num = num
+        # self.domains stores the state of all the variables' domains BEFORE the assignment is made
+        self.domains = domains
 
     def __str__(self):
         return f"Layer Num: {self.num}, Var_idx: {self.var_idx} || {self.assignment}"
@@ -120,7 +122,7 @@ class CrosswordCreator():
          constraints; in this case, the length of the word.)
         """
         # Iterates through list of variables, checking each variable's domain satisfies unary constraints (word length)
-        new_dict = {var:set(self.domains[var]) for var in dict(self.domains)}
+        new_dict = {var: set(self.domains[var]) for var in dict(self.domains)}
         for var in self.domains:
             for word in self.domains[var]:
                 if var.length != len(word):
@@ -176,7 +178,7 @@ class CrosswordCreator():
         if arcs is not None:
             arcs_list = arcs
         else:
-            arcs_list = set((x,y) for x in self.crossword.variables for y in self.crossword.variables if x != y)
+            arcs_list = set((x, y) for x in self.crossword.variables for y in self.crossword.variables if x != y)
         
         # Loop iterates until problem becomes infeasible or no further domain change is observed
         revision_made = True
@@ -256,13 +258,13 @@ class CrosswordCreator():
 
         # Initialise ruleout_dict to track how many values each word rules out in the unassigned neighbours' domains
         words_set = self.domains[var]
-        ruleout_dict = {word:0 for word in words_set}
+        ruleout_dict = {word: 0 for word in words_set}
 
         # Iterate through each word in the input variable's domain, noting how many neighbouring values it rules out
         for word in words_set:
             for neighbour in unassigned_neighbours_set:
                 for neighbour_word in self.domains[neighbour]:
-                    if not self.consistent({var:word, neighbour:neighbour_word}):
+                    if not self.consistent({var: word, neighbour: neighbour_word}):
                         ruleout_dict[word] += 1
         
         # ruleout_dict should now contain a dict of how many ruleouts each word causes
@@ -315,13 +317,16 @@ class CrosswordCreator():
         # Initialise the search
         force_bt = False
         consistent_complete = False
-        layer_list = [Layer(assignment, None, None, 0, 0)]
+        layer_list = [Layer(assignment, None, None, 0, 0, domains_deepcopy(self.domains))]
 
         # Iterates until either a consistent and complete assignment is found OR problem is deemed infeasible
         while not consistent_complete:
             
-            # Select uppermost layer in layer_list and enforce arc consistency based on its assignment
+            # Select uppermost layer in layer_list
             curr_layer = layer_list[0]
+
+            # Enforce arc consistency on that layer's domains
+            self.domains = domains_deepcopy(curr_layer.domains)
             self.ac3()
         
             # Checks if assignment has all variables assigned to actual words and words fit constraints
@@ -348,7 +353,7 @@ class CrosswordCreator():
                 # If var_list not empty, define the next layer and add to layer_list
                 new_assignment = dict(curr_layer.assignment)
                 new_assignment[curr_var] = curr_var_list[0]
-                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, curr_layer.num + 1)
+                new_layer = Layer(new_assignment, curr_var, curr_var_list, 0, curr_layer.num + 1, domains_deepcopy(self.domains))
                 layer_list.insert(0, new_layer)
 
             # Assignment reaches here only if it is both consistent AND complete, thus breaking the loop
@@ -384,7 +389,7 @@ def layer_list_incrementor(layer_list):
             backtrack_layer = True
             new_assignment = layer.assignment
             new_assignment[layer.var] = layer.var_list[layer.var_idx + 1]
-            new_layer_list.append(Layer(new_assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num))
+            new_layer_list.append(Layer(new_assignment, layer.var, layer.var_list, layer.var_idx + 1, layer.num, layer.domains))
             continue     
 
         # Add all layers after the backtrack layer to new_layer_list, unaltered
@@ -392,6 +397,13 @@ def layer_list_incrementor(layer_list):
             new_layer_list.append(layer)
 
     return new_layer_list
+
+def domains_deepcopy(domains):
+    '''
+    Returns a deep copy of the input domains dictionary.
+    '''
+    domains_copy = dict(domains)
+    return {val: set(domains_copy[val]) for val in domains_copy}
 
 # MAIN FUNCTION
 
