@@ -102,7 +102,7 @@ class NimAI():
         If no Q-value exists yet in `self.q`, return 0.
         """
 
-        # Access Q values from the Q value dictionary
+        # Access Q-values from the Q value dictionary
         key = (state, action)
         if key in self.q:
             return self.q[key]
@@ -172,7 +172,26 @@ class NimAI():
         If multiple actions have the same Q-value, any of those
         options is an acceptable return value.
         """
-        raise NotImplementedError
+
+        # With epsilon probability, determine if action is exploitive or exploring
+        prob_int = random.randint(1, 100)
+        actions = Nim.available_actions(state)
+        if prob_int <= epsilon*100:
+
+            # Choose random action
+            next_action = actions[random.randint(0, len(actions)-1)]
+
+        else:
+
+            # Choose best action
+            action_q_list = [(action, self.q[(state, action)]) for action in actions]
+            action_q_list.sort(key=lambda x: x[1])
+            next_action = action_q_list[-1][0]
+
+        # Return the next action
+        return next_action
+
+
 
 
 def train(n):
