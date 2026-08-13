@@ -20,6 +20,7 @@ MONTH_DICT = {
     "Dec": 11
 }
 
+
 def main():
 
     # Check command-line arguments
@@ -145,10 +146,11 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
+
+    # Build a k-th neighbour classifier model and train it on "training set" data
     model = KNeighborsClassifier(n_neighbors=1)
     model.fit(evidence, labels)
     return model
-    raise NotImplementedError
 
 
 def evaluate(labels, predictions):
@@ -166,7 +168,25 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+
+    # Count number of times model accurately predicts positive an negative results
+    (num_neg, num_pos, num_true_neg, num_true_pos) = (0, 0, 0, 0)
+    for i in range(len(labels)):
+        if labels[i] == 0:
+            num_neg += 1
+            if predictions[i] == 0:
+                num_true_neg += 1
+        else:
+            num_pos += 1
+            if predictions[i] == 1:
+                num_true_pos += 1 
+
+    # Use these frequencies to calculate sensitivity and specificity
+    sensitivity = num_true_pos/num_pos
+    specificity = num_true_neg/num_neg
+
+    # Return in tuple form
+    return (sensitivity, specificity)
 
 
 if __name__ == "__main__":
