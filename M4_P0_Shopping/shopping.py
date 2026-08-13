@@ -5,7 +5,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 
 TEST_SIZE = 0.4
-
+MONTH_DICT = {
+    "Jan": 0,
+    "Feb": 1,
+    "Mar": 2,
+    "Apr": 3,
+    "May": 4,
+    "June": 5,
+    "Jul": 6,
+    "Aug": 7,
+    "Sep": 8,
+    "Oct": 9,
+    "Nov": 10,
+    "Dec": 11
+}
 
 def main():
 
@@ -59,7 +72,72 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+
+    # Open and do an initial clean of csv data
+    with open(filename) as csv:
+        raw_list = csv.readlines()
+    string_list = [item.strip("\n").split(",") for item in raw_list[1:]]
+
+    # Final clean of data, separating columns into evidence and labels
+    evidence = []
+    labels = []
+    for data in string_list:
+
+        # Collect the evidence in the required format for each datapoint
+        new_evidence = [None] * 17
+        # - Administrative, an integer
+        new_evidence[0] = int(data[0])
+        # - Administrative_Duration, a floating point number
+        new_evidence[1] = float(data[1])
+        # - Informational, an integer
+        new_evidence[2] = int(data[2])
+        # - Informational_Duration, a floating point number
+        new_evidence[3] = float(data[3])
+        # - ProductRelated, an integer
+        new_evidence[4] = int(data[4])
+        # - ProductRelated_Duration, a floating point number
+        new_evidence[5] = float(data[5])
+        # - BounceRates, a floating point number
+        new_evidence[6] = float(data[6])
+        # - ExitRates, a floating point number
+        new_evidence[7] = float(data[7])
+        # - PageValues, a floating point number
+        new_evidence[8] = float(data[8])
+        # - SpecialDay, a floating point number
+        new_evidence[9] = float(data[9])
+        # - Month, an index from 0 (January) to 11 (December)
+        new_evidence[10] = MONTH_DICT[data[10]]
+        # - OperatingSystems, an integer
+        new_evidence[11] = int(data[11])
+        # - Browser, an integer
+        new_evidence[12] = int(data[12])
+        # - Region, an integer
+        new_evidence[13] = int(data[13])
+        # - TrafficType, an integer
+        new_evidence[14] = int(data[14])
+        # - VisitorType, an integer 0 (not returning) or 1 (returning)
+        if data[15] == "Returning_Visitor":
+            new_evidence[15] = 1
+        else:
+            new_evidence[15] = 0
+        # - Weekend, an integer 0 (if false) or 1 (if true)
+        if data[16] == "TRUE":
+            new_evidence[16] = 1
+        else:
+            new_evidence[16] = 0
+
+        # Format the label in the required format
+        if data[17] == "TRUE":
+            new_label = 1
+        else:
+            new_label = 0
+
+        # Add both to evidence/labels list
+        evidence.append(new_evidence)
+        labels.append(new_label)
+
+    # Return correctly formatted evidence and labels lists
+    return evidence, labels
 
 
 def train_model(evidence, labels):
