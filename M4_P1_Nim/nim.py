@@ -186,13 +186,13 @@ class NimAI():
 
             # And if event with epsilon probability occurs
             prob_int = random.randint(1, 100)
-            if  prob_int <= self.epsilon*100:
+            if prob_int <= self.epsilon*100:
                 # Choose random action
                 return actions[random.randint(0, len(actions)-1)]
 
         # Otherwise, choose best action
         action_q_list = [(action, self.q[(tuple(state), tuple(action))]) for action in actions 
-                            if (tuple(state), tuple(action)) in self.q]
+                         if (tuple(state), tuple(action)) in self.q]
         action_q_list.sort(key=lambda x: x[1])
         return action_q_list[-1][0]
 
