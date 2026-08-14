@@ -106,7 +106,9 @@ class NimAI():
         key = (tuple(state), tuple(action))
         if key in self.q:
             return self.q[key]
+        
         else:
+            # If action/state pair not in dict, return 0
             return 0
 
     def update_q_value(self, state, action, old_q, reward, future_rewards):
@@ -147,12 +149,17 @@ class NimAI():
         actions = Nim.available_actions(state)
 
         # Iterate through all possible actions, updating incumbent when better Q found
-        incumbent_q = 0
         if actions:
+            incumbent_q = -999
             for action in actions:
                 test_q = self.get_q_value(state, action)
+
                 if test_q >= incumbent_q:
                     incumbent_q = test_q
+        
+        else:
+            # If no actions possible, let best future reward be 0
+            incumbent_q = 0
 
         # Return highest Q-value found
         return incumbent_q
@@ -173,20 +180,21 @@ class NimAI():
         options is an acceptable return value.
         """
 
-        # With epsilon probability, determine if action is exploitive or exploring
-        prob_int = random.randint(1, 100)
+        # If epsilson is True
         actions = list(Nim.available_actions(state))
-        if prob_int <= epsilon*100:
+        if epsilon:
 
-            # Choose random action
-            next_action = actions[random.randint(0, len(actions)-1)]
+            # And if event with epsilon probability occurs
+            prob_int = random.randint(1, 100)
+            if  prob_int <= self.epsilon*100:
+                # Choose random action
+                return actions[random.randint(0, len(actions)-1)]
 
-        else:
-
-            # Choose best action
-            action_q_list = [(action, self.q[(tuple(state), tuple(action))]) for action in actions]
-            action_q_list.sort(key=lambda x: x[1])
-            next_action = action_q_list[-1][0]
+        # Otherwise, choose best action
+        action_q_list = [(action, self.q[(tuple(state), tuple(action))]) for action in actions 
+                            if (tuple(state), tuple(action)) in self.q]
+        action_q_list.sort(key=lambda x: x[1])
+        return action_q_list[-1][0]
 
         # Return the next action
         return next_action
