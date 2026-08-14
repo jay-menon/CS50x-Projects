@@ -103,7 +103,7 @@ class NimAI():
         """
 
         # Access Q-values from the Q value dictionary
-        key = (state, action)
+        key = (tuple(state), tuple(action))
         if key in self.q:
             return self.q[key]
         else:
@@ -130,7 +130,7 @@ class NimAI():
         new_q = old_q + self.alpha * (new_estimate - old_q)
 
         # Update the Q-value in the dictionary
-        self.q[(state, action)] = new_q
+        self.q[(tuple(state), tuple(action))] = new_q
 
     def best_future_reward(self, state):
         """
@@ -147,8 +147,8 @@ class NimAI():
         actions = Nim.available_actions(state)
 
         # Iterate through all possible actions, updating incumbent when better Q found
+        incumbent_q = 0
         if actions:
-            incumbent_q = 0
             for action in actions:
                 test_q = self.get_q_value(state, action)
                 if test_q >= incumbent_q:
@@ -175,7 +175,7 @@ class NimAI():
 
         # With epsilon probability, determine if action is exploitive or exploring
         prob_int = random.randint(1, 100)
-        actions = Nim.available_actions(state)
+        actions = list(Nim.available_actions(state))
         if prob_int <= epsilon*100:
 
             # Choose random action
@@ -184,14 +184,12 @@ class NimAI():
         else:
 
             # Choose best action
-            action_q_list = [(action, self.q[(state, action)]) for action in actions]
+            action_q_list = [(action, self.q[(tuple(state), tuple(action))]) for action in actions]
             action_q_list.sort(key=lambda x: x[1])
             next_action = action_q_list[-1][0]
 
         # Return the next action
         return next_action
-
-
 
 
 def train(n):
