@@ -87,11 +87,12 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
+    
     # Create a convolutional neural network
     model = tf.keras.models.Sequential([
 
         # Input layer
-        tf.keras.layers.Dense(1, input_shape=(IMG_WIDTH, IMG_HEIGHT, 3), activation="relu"),
+        tf.keras.layers.Input(shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
 
         # Convolutional layer. Learn 32 filters using a 3x3 kernel
         tf.keras.layers.Conv2D(
