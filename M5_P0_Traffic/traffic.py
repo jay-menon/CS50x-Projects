@@ -62,14 +62,17 @@ def load_data(data_dir):
     # Initialise images/labels lists:
     (images, labels) = ([], [])
 
-    # Access individual image files from directory
+    # Access signs' directories from data directory
     sign_files = os.listdir(data_dir)
     for sign_label in sign_files:
         sign_path = data_dir + os.sep + sign_label
         image_files = os.listdir(sign_path)
+
+        # Access each individual image from each sign's directory
         for image in image_files:
             image_path = sign_path + os.sep + image
 
+            # Process raw image files to specified format and dimensions
             image_nda = cv2.imread(image_path)
             image_nda = cv2.resize(image_nda, (IMG_WIDTH, IMG_HEIGHT))
 
@@ -94,26 +97,25 @@ def get_model():
         # Input layer
         tf.keras.layers.Input(shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
 
-        # Convolutional/pooling layer
+        # Convolutional/pooling layer 1
         tf.keras.layers.Conv2D(64, (4, 4), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
         tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
 
-        # Convolutional/pooling layer
+        # Convolutional/pooling layer 2
         tf.keras.layers.Conv2D(64, (4, 4), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
         tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
 
         # Flatten units
         tf.keras.layers.Flatten(),
 
-        # Add a hidden layer with dropout
+        # Add a hidden layer
         tf.keras.layers.Dense(250, activation="relu"),
-        #tf.keras.layers.Dropout(0.2),
 
         # Add a hidden layer with dropout
         tf.keras.layers.Dense(200, activation="relu"),
         tf.keras.layers.Dropout(0.2),
 
-        # Add an output layer with output units for all 10 digits
+        # Add an output layer with output units for all 43 sign classes
         tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")
     ])
 
