@@ -63,8 +63,9 @@ def preprocess(sentence):
     character.
     """
     
-    # Separates words by the spaces between them
-    sentence_list = sentence.split(" ")
+    # Cleans sentence and separates words by spaces between them
+    clean_sentence = sentence.strip(".\n")
+    sentence_list = clean_sentence.split(" ")
 
     # Lowercases all words and ignores items without letters
     new_sentence_list = []
@@ -84,7 +85,8 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    raise NotImplementedError
+    
+    print(tree)
 
 
 if __name__ == "__main__":
