@@ -15,7 +15,23 @@ V -> "smiled" | "tell" | "were"
 """
 
 NONTERMINALS = """
-S -> N V
+S -> NP VP
+S -> NP VP NP
+S -> NP VP PP
+S -> S Conj S
+S -> S Adv
+S -> S Conj VP
+
+NP -> N | Det N
+NP -> NP PP
+NP -> Det AdjP
+
+PP -> P NP
+
+VP -> V | Adv V
+VP -> VP NP
+
+AdjP -> Adj NP | Adj AdjP
 """
 
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
@@ -35,6 +51,7 @@ def main():
 
     # Convert input into list of words
     s = preprocess(s)
+    print(s)
 
     # Attempt to parse sentence
     try:
