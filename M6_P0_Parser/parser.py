@@ -34,6 +34,9 @@ VP -> VP NP
 AdjP -> Adj NP | Adj AdjP
 """
 
+ALPHABET = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+            "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
 parser = nltk.ChartParser(grammar)
 
@@ -51,7 +54,6 @@ def main():
 
     # Convert input into list of words
     s = preprocess(s)
-    print(s)
 
     # Attempt to parse sentence
     try:
@@ -81,15 +83,22 @@ def preprocess(sentence):
     """
     
     # Cleans sentence and separates words by spaces between them
-    clean_sentence = sentence.strip(".\n")
+    clean_sentence = sentence.strip("\n").strip(".")
     sentence_list = clean_sentence.split(" ")
 
     # Lowercases all words and ignores items without letters
     new_sentence_list = []
     for item in sentence_list:
         
+        # Filters out nay punctuation-only items
         if item.upper() != item.lower():
-            new_sentence_list.append(item.lower())
+
+            # Filters out any punctuation in items with letters
+            new_word = ""
+            for character in item.lower():
+                if character in ALPHABET:
+                    new_word += character
+            new_sentence_list.append(new_word)        
 
     # Returns new_sentence_list
     return new_sentence_list
@@ -102,9 +111,24 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
+
+    np_chunks = []
+
+    for subtree in tree.subtrees():
+        label = subtree.label()
+        np_subtrees = [i for i in subtree.subtrees(filter=lambda x: x.label() == "NP")]
+
+        if label == "NP" and len(np_subtrees) == 1:
+            np_chunks.append(subtree)
     
-    print(tree)
+    return np_chunks
 
 
 if __name__ == "__main__":
-    main()
+   main()
+
+
+
+# t = nltk.Tree.fromstring("(S (NP (D the) (N dog)) (VP (V chased) (NP (D the) (N cat))))")
+# for i in t.subtrees():
+#     print(i)
