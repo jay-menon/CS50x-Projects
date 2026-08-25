@@ -90,14 +90,18 @@ def preprocess(sentence):
     new_sentence_list = []
     for item in sentence_list:
         
-        # Filters out nay punctuation-only items
+        # Filters out any punctuation-only items
         if item.upper() != item.lower():
 
             # Filters out any punctuation in items with letters
             new_word = ""
             for character in item.lower():
+
+                # Ignores non-letter characters
                 if character in ALPHABET:
                     new_word += character
+            
+            # Appends character-only string to new_sentence_list
             new_sentence_list.append(new_word)        
 
     # Returns new_sentence_list
@@ -112,23 +116,23 @@ def np_chunk(tree):
     noun phrases as subtrees.
     """
 
+    # Initialises np_chunks list
     np_chunks = []
 
+    # Iterates through ALL possible subtrees of complete tree (including itself)
     for subtree in tree.subtrees():
+
+        # Identifies subtree's label and if subtree has any NP subtrees
         label = subtree.label()
         np_subtrees = [i for i in subtree.subtrees(filter=lambda x: x.label() == "NP")]
 
+        # If subtree's label is NP and has no NP subtrees, add to np_chunks
         if label == "NP" and len(np_subtrees) == 1:
             np_chunks.append(subtree)
     
+    # Return np_chunks
     return np_chunks
 
 
 if __name__ == "__main__":
    main()
-
-
-
-# t = nltk.Tree.fromstring("(S (NP (D the) (N dog)) (VP (V chased) (NP (D the) (N cat))))")
-# for i in t.subtrees():
-#     print(i)
