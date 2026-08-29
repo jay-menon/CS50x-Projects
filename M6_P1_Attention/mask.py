@@ -45,9 +45,13 @@ def get_mask_token_index(mask_token_id, inputs):
     Return the index of the token with the specified `mask_token_id`, or
     `None` if not present in the `inputs`.
     """
-    # TODO: Implement this function
-    raise NotImplementedError
-
+    print("check")
+    print(inputs)
+    if mask_token_id in inputs['input_ids']:
+        print(inputs.index(mask_token_id))
+        return inputs.index(mask_token_id)
+    print("Erm")
+    return None
 
 
 def get_color_for_attention_score(attention_score):
