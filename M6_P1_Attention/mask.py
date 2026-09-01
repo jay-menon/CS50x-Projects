@@ -29,6 +29,8 @@ def main():
     # Use model to process input
     model = TFBertForMaskedLM.from_pretrained(MODEL)
     result = model(**inputs, output_attentions=True)
+    print("Results format")
+    print(result)
 
     # Generate predictions
     mask_token_logits = result.logits[0, mask_token_index]
@@ -45,12 +47,9 @@ def get_mask_token_index(mask_token_id, inputs):
     Return the index of the token with the specified `mask_token_id`, or
     `None` if not present in the `inputs`.
     """
-    print("check")
-    print(inputs)
-    if mask_token_id in inputs['input_ids']:
-        print(inputs.index(mask_token_id))
-        return inputs.index(mask_token_id)
-    print("Erm")
+    inputs_list = list(inputs['input_ids'].numpy()[0])
+    if mask_token_id in inputs_list:
+        return inputs_list.index(mask_token_id)
     return None
 
 
@@ -59,9 +58,7 @@ def get_color_for_attention_score(attention_score):
     Return a tuple of three integers representing a shade of gray for the
     given `attention_score`. Each value should be in the range [0, 255].
     """
-    # TODO: Implement this function
-    raise NotImplementedError
-
+    print(attention_score)
 
 
 def visualize_attentions(tokens, attentions):
@@ -135,3 +132,6 @@ def generate_diagram(layer_number, head_number, tokens, attention_weights):
 
 if __name__ == "__main__":
     main()
+
+
+# Why did the chicken cross the [MASK]?
