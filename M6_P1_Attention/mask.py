@@ -47,9 +47,17 @@ def get_mask_token_index(mask_token_id, inputs):
     Return the index of the token with the specified `mask_token_id`, or
     `None` if not present in the `inputs`.
     """
+
+    # Reformat array of input tokens to an indexable list
     inputs_list = list(inputs['input_ids'].numpy()[0])
+
+    # Check if there is a [MASK] token in the inputs list
     if mask_token_id in inputs_list:
+
+        # If there is, return the index of that token
         return inputs_list.index(mask_token_id)
+    
+    # Otherwise, return None
     return None
 
 
@@ -58,9 +66,11 @@ def get_color_for_attention_score(attention_score):
     Return a tuple of three integers representing a shade of gray for the
     given `attention_score`. Each value should be in the range [0, 255].
     """
-    #print("Attention score:")
-    #print(attention_score)
+
+    # RGB value is the 0 to 1 attention score scaled to the 0 to 255 range
     value = int(255*attention_score.numpy())
+
+    # Return same value 3 times since grid is greyscale (colour irrelevant)
     return (value, value, value)
 
 
@@ -75,13 +85,18 @@ def visualize_attentions(tokens, attentions):
     (starting count from 1).
     """
 
-    for i in range(0,12):
-       for j in  range(0,12):
+    # Iterate across all 12 layers in model
+    for layer_idx in range(0,12):
+
+       # Iterate across all 12 heads in each layer
+       for head_idx in range(0,12):
+
+            # Generate attention diagrams for each head in each layer
             generate_diagram(
-                i+1,
-                j+1,
+                layer_idx+1,
+                head_idx+1,
                 tokens,
-                attentions[i][0][j]
+                attentions[layer_idx][0][head_idx]
             )
 
 
@@ -137,6 +152,3 @@ def generate_diagram(layer_number, head_number, tokens, attention_weights):
 
 if __name__ == "__main__":
     main()
-
-
-# Why did the chicken cross the [MASK]?
