@@ -182,8 +182,8 @@ Throughout this course, projects involve:
 | 2      | Uncertainty     | ✅      |
 | 3      | Optimization    | ✅      |
 | 4      | Learning        | ✅      |
-| 5      | Neural Networks | 🟨      |
-| 6      | Language        | ⬜      |
+| 5      | Neural Networks | ✅      |
+| 6      | Language        | ✅      |
 
 Legend:
 
